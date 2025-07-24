@@ -235,6 +235,9 @@ body {
 #creature-content {
     flex-grow: 1; padding: 1.5rem; overflow-y: auto;
 }
+.creature-table-wrapper {
+    overflow-x: auto; /* Allows table to scroll horizontally on small screens */
+}
 .creature-table {
     width: 100%;
     border-collapse: collapse;
@@ -245,6 +248,7 @@ body {
     border-bottom: 1px solid var(--border-color);
     text-align: left;
     vertical-align: middle;
+    white-space: nowrap; /* Prevents text from wrapping in table cells */
 }
 .creature-table th {
     color: var(--text-secondary-color);
@@ -258,6 +262,10 @@ body {
 }
 .creature-table .creature-name {
     font-weight: bold;
+    white-space: normal; /* Allows creature names to wrap if needed */
+}
+.creature-table td:last-child {
+    white-space: normal; /* Allows the 'Special' column to wrap */
 }
 .placeholder-panel {
     padding: 3rem;
@@ -283,20 +291,41 @@ body {
     }
 }
 @media (max-width: 768px) {
-    .sub-view-container { flex-direction: column; }
+    .sub-view-container {
+        flex-direction: column; /* Stacks sidebar and content vertically */
+    }
     #class-sidebar, #faction-sidebar {
-        width: 100%; border-right: none; border-bottom: 2px solid var(--border-color);
-        display: flex; overflow-x: auto; padding: 0.5rem;
+        width: 100%;
+        height: auto; /* Allow sidebar height to be determined by its content */
+        border-right: none;
+        border-bottom: 2px solid var(--border-color);
+        display: flex;
+        flex-direction: row; /* Make buttons align horizontally */
+        overflow-x: auto; /* Allow sidebar to scroll horizontally */
+        padding: 0.5rem;
         flex-shrink: 0;
-        flex-direction: column; /* Allow vertical stacking of faction tabs */
+        align-items: center;
+    }
+    #class-sidebar {
+        flex-direction: column; /* Heroes sidebar needs vertical stacking for faction tabs */
         align-items: stretch;
     }
-    #class-sidebar .faction-tab { flex-shrink: 0; }
-    #faction-sidebar .sidebar-button { flex-shrink: 0; margin: 0 5px; }
+    #faction-sidebar .sidebar-button,
+    #class-sidebar .faction-tab {
+        flex-shrink: 0; /* Prevent buttons from shrinking */
+        margin: 0 5px;
+    }
+    #class-sidebar .faction-tab {
+        min-width: 150px;
+    }
 
     .page-grid {
-        grid-template-columns: 1fr;
-        grid-template-areas: "class-primary-skills" "magic-chance" "movement-info" "skills-info" "heroes";
+        display: flex; /* Switch from grid to flexbox for simple stacking */
+        flex-direction: column;
+    }
+
+    #main-content, #creature-content {
+        padding: 1rem; /* Reduce padding on small screens */
     }
 }
 
