@@ -11,50 +11,52 @@
         <nav id="main-tabs">
             <button class="tab-button active" data-view="heroes-view">Heroes & Skills</button>
             <button class="tab-button" data-view="creatures-view">Creatures</button>
+            <button class="tab-button" data-view="spells-view">Spells</button>
         </nav>
 
-        <!-- Heroes View -->
         <div id="heroes-view" class="view">
             <div class="sub-view-container">
                 <aside id="class-sidebar">
-                    <!-- Class selection buttons will be generated here -->
-                </aside>
+                    </aside>
                 <main id="main-content">
-                    <!-- Class and Hero details will be rendered here -->
-                </main>
+                    </main>
             </div>
         </div>
 
-        <!-- Creatures View -->
         <div id="creatures-view" class="view view-hidden">
              <div class="sub-view-container">
                 <aside id="faction-sidebar">
-                    <!-- Faction selection buttons will be generated here -->
-                </aside>
+                    </aside>
                 <main id="creature-content">
-                    <!-- Creature details will be rendered here -->
-                </main>
+                    </main>
+            </div>
+        </div>
+
+        <div id="spells-view" class="view view-hidden">
+             <div class="sub-view-container">
+                <aside id="school-sidebar">
+                    </aside>
+                <main id="spell-content">
+                    </main>
             </div>
         </div>
     </div>
 
-    <!-- Modal for displaying details -->
     <div id="modal" class="modal-hidden">
         <div id="modal-content">
             <button id="modal-close">&times;</button>
             <div id="modal-body">
-                <!-- Details will be injected here -->
-            </div>
+                </div>
         </div>
     </div>
 
-    <!-- Data and Logic Scripts -->
     <script src="heroes.js"></script>
     <script src="skills.js"></script>
     <script src="skill_probabilities.js"></script>
     <script src="classes.js"></script>
     <script src="movement.js"></script>
     <script src="creatures.js"></script>
+    <script src="spells.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
