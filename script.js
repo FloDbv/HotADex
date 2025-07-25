@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const classes = classesData;
     const moveData = movementData;
     const allCreatures = creaturesData;
+    const allSpells = spellsData;
 
     // --- DOM Elements ---
     const tabButtons = document.querySelectorAll('.tab-button');
@@ -21,7 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Creatures View Elements
     const factionSidebar = document.getElementById('faction-sidebar');
     const creatureContent = document.getElementById('creature-content');
-    
+
+    // Spells View Elements
+    const schoolSidebar = document.getElementById('school-sidebar');
+    const spellContent = document.getElementById('spell-content');
+
     // --- Mobile Detection ---
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
@@ -34,11 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
             renderClassView(Object.keys(classes)[0]);
             populateFactionDropdown_Mobile();
             renderCreatureView('All');
+            populateSchoolDropdown_Mobile();
+            renderSpellView('Air');
         } else {
             populateClassSidebar();
             renderClassView(Object.keys(classes)[0]);
             populateFactionSidebar();
             renderCreatureView('All');
+            populateSchoolSidebar();
+            renderSpellView('Air');
         }
     }
 
@@ -186,12 +195,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
         attachMainContentListeners();
     }
-    
+
     function renderClassView_Mobile(className) {
         const classData = classes[className];
         const classSkillProbs = skillProbabilities[className];
         const heroesOfClass = heroes.filter(h => h.class === className);
-        
+
         mainContent.innerHTML = `
             <div class="mobile-accordion">
                 <details>
@@ -259,10 +268,10 @@ document.addEventListener('DOMContentLoaded', () => {
             option.textContent = faction === 'All' ? 'All Creatures' : faction;
             select.appendChild(option);
         });
-        
+
         const compareOptgroup = document.createElement('optgroup');
         compareOptgroup.label = "Comparisons";
-        
+
         const compareFactionsOption = document.createElement('option');
         compareFactionsOption.value = 'Compare Factions';
         compareFactionsOption.textContent = 'Compare Factions';
@@ -318,6 +327,76 @@ document.addEventListener('DOMContentLoaded', () => {
         const filteredCreatures = faction === 'All' ? allCreatures : allCreatures.filter(c => c.faction === faction);
         creatureContent.innerHTML = `<div class="panel"><h2>${faction} Creatures</h2>${nativeTerrainInfo}<table class="creature-table"><thead><tr><th>Lvl</th><th>Creature</th><th>Att</th><th>Def</th><th>Dmg</th><th>HP</th><th>Spd</th><th>Grw</th><th>AI</th><th>Cost</th><th>Special</th></tr></thead><tbody>${filteredCreatures.map(c => `<tr class="${c.upgraded ? 'upgraded-row' : ''}"><td>${c.level}${c.upgraded ? '+' : ''}</td><td class="creature-name clickable" data-creature-name="${c.name}">${c.name}</td><td>${c.att}</td><td>${c.def}</td><td>${c.dmg_min}-${c.dmg_max}</td><td>${c.hp}</td><td>${c.spd}</td><td>${c.grw}</td><td>${c.ai_val}</td><td>${formatCost(c.cost)}</td><td>${formatSpecial(c.special)}</td></tr>`).join('')}</tbody></table></div>`;
         attachCreatureContentListeners();
+    }
+
+    // --- Spells View Functions ---
+    function populateSchoolSidebar() {
+        const schools = ["Air", "Earth", "Fire", "Water"];
+        schoolSidebar.innerHTML = '';
+        schools.forEach(school => {
+            const button = document.createElement('button');
+            button.className = 'sidebar-button';
+            button.dataset.school = school;
+            button.textContent = `${school} Magic`;
+            schoolSidebar.appendChild(button);
+        });
+        schoolSidebar.querySelectorAll('.sidebar-button').forEach(button => {
+            button.addEventListener('click', () => renderSpellView(button.dataset.school));
+        });
+    }
+
+    function populateSchoolDropdown_Mobile() {
+        schoolSidebar.innerHTML = '';
+        const select = document.createElement('select');
+        select.className = 'mobile-select';
+        select.addEventListener('change', (e) => renderSpellView(e.target.value));
+        const schools = ["Air", "Earth", "Fire", "Water"];
+        schools.forEach(school => {
+            const option = document.createElement('option');
+            option.value = school;
+            option.textContent = `${school} Magic`;
+            select.appendChild(option);
+        });
+        schoolSidebar.appendChild(select);
+    }
+
+    function renderSpellView(school) {
+        if (!isMobile) {
+            document.querySelectorAll('#school-sidebar .sidebar-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.school === school);
+            });
+        }
+        const commonSpells = Object.values(allSpells).filter(s => s.school === "All");
+        const schoolSpells = Object.values(allSpells).filter(s => s.school === school);
+        const spellsToDisplay = [...commonSpells, ...schoolSpells].sort((a,b) => a.level - b.level);
+
+        const spellsByLevel = {};
+        spellsToDisplay.forEach(spell => {
+            if (!spellsByLevel[spell.level]) {
+                spellsByLevel[spell.level] = [];
+            }
+            spellsByLevel[spell.level].push(spell);
+        });
+
+        let contentHTML = `<div class="panel"><h2>${school} Magic Spells</h2>`;
+        for (const level in spellsByLevel) {
+            contentHTML += `<h3>Level ${level}</h3>`;
+            contentHTML += `<table class="spell-list-table"><thead><tr><th>Spell</th><th>Cost (w/o / with skill)</th><th>Duration</th><th>Effect</th></tr></thead><tbody>`;
+            spellsByLevel[level].forEach(spell => {
+                contentHTML += `
+                    <tr>
+                        <td class="clickable spell-name" data-spell-name="${spell.name}">${spell.name}</td>
+                        <td>${spell.cost}</td>
+                        <td>${spell.duration}</td>
+                        <td>${spell.effect.summary}</td>
+                    </tr>
+                `;
+            });
+            contentHTML += `</tbody></table>`;
+        }
+        contentHTML += `</div>`;
+        spellContent.innerHTML = contentHTML;
+        attachSpellContentListeners();
     }
 
 
@@ -385,6 +464,49 @@ document.addEventListener('DOMContentLoaded', () => {
         const loreHTML = creature.lore ? `<details class="hota-details"><summary>Lore</summary><div class="details-content">${creature.lore.replace(/\n/g, '<br><br>')}</div></details>` : '';
 
         modalBody.innerHTML = `<h3>${creature.name}</h3>${analysisHTML}${loreHTML}`;
+        showModal();
+    }
+
+    function displaySpellDetails(spellName) {
+        const spell = allSpells[spellName];
+        if (!spell) return;
+
+        let modalHTML = `<h3>${spell.name}</h3>`;
+        const createDetailSection = (title, content) => {
+            if (!content || (Array.isArray(content) && content.length === 0)) return '';
+            return `<details class="hota-details" open><summary>${title}</summary><div class="details-content">${content}</div></details>`;
+        };
+
+        if (spell.effect.breakdown) {
+            const effectContent = `<ul>
+                <li><strong>Basic:</strong> ${spell.effect.breakdown.Basic}</li>
+                <li><strong>Advanced:</strong> ${spell.effect.breakdown.Advanced}</li>
+                <li><strong>Expert:</strong> ${spell.effect.breakdown.Expert}</li>
+            </ul>`;
+            modalHTML += createDetailSection("Spell Effect by Expertise", effectContent);
+        }
+
+        modalHTML += createDetailSection("General Information", spell.general_info);
+
+        if (spell.probabilities) {
+            const probContent = `<table class="modal-table"><thead><tr><th>Faction</th><th>Chance</th></tr></thead><tbody>
+                ${Object.entries(spell.probabilities).map(([faction, chance]) => `<tr><td>${faction}</td><td>${chance}</td></tr>`).join('')}
+            </tbody></table>`;
+            modalHTML += createDetailSection("Probability of Occurrence", probContent);
+        }
+
+        modalHTML += createDetailSection("Hero(es) starting with this spell", spell.starting_heroes?.join(', '));
+        modalHTML += createDetailSection("Hero(es) specializing in this spell", spell.specializing_heroes?.join(', '));
+        modalHTML += createDetailSection("Creature(s) immune to this spell", spell.immune_creatures?.join(', '));
+        modalHTML += createDetailSection("Creature(s) capable of casting this spell", spell.casting_creatures?.join(', '));
+        modalHTML += createDetailSection("Damage Increased With", spell.damage_increases?.join('<br>'));
+        modalHTML += createDetailSection("Damage Decreased With", spell.damage_decreases?.join('<br>'));
+        modalHTML += createDetailSection("HotA Modifications", spell.hota_modifications);
+        modalHTML += createDetailSection("Trivia", spell.trivia);
+        modalHTML += createDetailSection("Gameplay Analysis", spell.gameplay_analysis);
+        modalHTML += createDetailSection("In-depth Mechanics", spell.in_depth_mechanics);
+
+        modalBody.innerHTML = modalHTML;
         showModal();
     }
 
@@ -511,6 +633,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalBody.innerHTML = `<h3>${specialName} (Special Ability)</h3><p>${specialDesc}</p>`;
                 showModal();
             });
+        });
+    }
+
+    function attachSpellContentListeners() {
+        spellContent.querySelectorAll('.clickable[data-spell-name]').forEach(el => {
+            el.addEventListener('click', (e) => displaySpellDetails(e.currentTarget.dataset.spellName));
         });
     }
 
