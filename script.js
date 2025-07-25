@@ -21,14 +21,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Creatures View Elements
     const factionSidebar = document.getElementById('faction-sidebar');
     const creatureContent = document.getElementById('creature-content');
+    
+    // --- Mobile Detection ---
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
 
     // --- Initialization ---
     function init() {
         setupEventListeners();
-        populateClassSidebar();
-        renderClassView(Object.keys(classes)[0]);
-        populateFactionSidebar();
-        renderCreatureView('All');
+        if (isMobile) {
+            populateClassDropdown_Mobile();
+            renderClassView(Object.keys(classes)[0]);
+            populateFactionDropdown_Mobile();
+            renderCreatureView('All');
+        } else {
+            populateClassSidebar();
+            renderClassView(Object.keys(classes)[0]);
+            populateFactionSidebar();
+            renderCreatureView('All');
+        }
     }
 
     // --- View Management ---
@@ -53,14 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof special === 'object' && special.description) {
             return `<span class="clickable" data-special-name="${special.name}" data-special-desc="${special.description}">${special.name}</span>`;
         }
-         // Fallback for old string format
         if (typeof special === 'string') {
             return special;
         }
         return special.name || '–';
     }
 
-    // --- Heroes View Functions ---
+    // --- Heroes View Functions (Desktop) ---
     function populateClassSidebar() {
         classSidebar.innerHTML = '';
         const factions = {};
@@ -101,7 +111,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Heroes View Functions (Mobile) ---
+    function populateClassDropdown_Mobile() {
+        classSidebar.innerHTML = '';
+        const select = document.createElement('select');
+        select.className = 'mobile-select';
+        select.addEventListener('change', (e) => renderClassView(e.target.value));
+
+        const factions = {};
+        for (const className in classes) {
+            const faction = classes[className].faction;
+            if (!factions[faction]) {
+                factions[faction] = [];
+            }
+            factions[faction].push(className);
+        }
+        const sortedFactions = Object.keys(factions).sort();
+        for (const factionName of sortedFactions) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = factionName;
+            const classesInFaction = factions[factionName];
+            classesInFaction.forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                optgroup.appendChild(option);
+            });
+            select.appendChild(optgroup);
+        }
+        classSidebar.appendChild(select);
+    }
+
     function renderClassView(className) {
+        if (isMobile) {
+            renderClassView_Mobile(className);
+        } else {
+            renderClassView_Desktop(className);
+        }
+    }
+
+    function renderClassView_Desktop(className) {
         const selectedFactionName = classes[className].faction;
         document.querySelectorAll('#class-sidebar .faction-tab-button').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.faction === selectedFactionName);
@@ -137,6 +186,48 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
         attachMainContentListeners();
     }
+    
+    function renderClassView_Mobile(className) {
+        const classData = classes[className];
+        const classSkillProbs = skillProbabilities[className];
+        const heroesOfClass = heroes.filter(h => h.class === className);
+        
+        mainContent.innerHTML = `
+            <div class="mobile-accordion">
+                <details>
+                    <summary>Primary Skills</summary>
+                    <div class="panel-content">
+                        <table class="stats-grid-table"><thead><tr><th></th><th class="clickable" data-primary-skill="attack">A</th><th class="clickable" data-primary-skill="defense">D</th><th class="clickable" data-primary-skill="power">SP</th><th class="clickable" data-primary-skill="knowledge">K</th></tr></thead><tbody><tr><td>Lvl 1</td><td>${classData.primary_skills.attack}</td><td>${classData.primary_skills.defense}</td><td>${classData.primary_skills.power}</td><td>${classData.primary_skills.knowledge}</td></tr><tr><td>Lvl 2-9</td><td>${classData.primary_skill_chance.levels_2_9.attack}</td><td>${classData.primary_skill_chance.levels_2_9.defense}</td><td>${classData.primary_skill_chance.levels_2_9.power}</td><td>${classData.primary_skill_chance.levels_2_9.knowledge}</td></tr><tr><td>Lvl 10+</td><td>${classData.primary_skill_chance.levels_10_plus.attack}</td><td>${classData.primary_skill_chance.levels_10_plus.defense}</td><td>${classData.primary_skill_chance.levels_10_plus.power}</td><td>${classData.primary_skill_chance.levels_10_plus.knowledge}</td></tr></tbody></table>
+                    </div>
+                </details>
+                <details>
+                    <summary>Secondary Skills %</summary>
+                    <div class="panel-content">
+                        <table class="info-table">${Object.entries(classSkillProbs).sort((a, b) => b[1] - a[1]).map(([skill, chance]) => `<tr class="clickable" data-skill-name="${skill}"><td>${skill}</td><td>${chance}</td></tr>`).join('')}</table>
+                    </div>
+                </details>
+                <details>
+                    <summary>Magic & Wisdom %</summary>
+                    <div class="panel-content">
+                        <div class="magic-chance-grid"><div class="school-name clickable" data-school-name="Air">Air</div><div class="school-name clickable" data-school-name="Earth">Earth</div><div class="school-name clickable" data-school-name="Fire">Fire</div><div class="school-name clickable" data-school-name="Water">Water</div><div class="school-chance">${classData.magic_roll_chance.air}%</div><div class="school-chance">${classData.magic_roll_chance.earth}%</div><div class="school-chance">${classData.magic_roll_chance.fire}%</div><div class="school-chance">${classData.magic_roll_chance.water}%</div></div><div class="guaranteed-skill-info"><div>Magic School guaranteed every ${classData.guaranteed_magic_school} lvl</div><div>Wisdom guaranteed every ${classData.guaranteed_wisdom} lvl</div></div>
+                    </div>
+                </details>
+                 <details>
+                    <summary>Movement</summary>
+                    <div class="panel-content">
+                       <table class="movement-table"><thead><tr><th>Unit Spd</th><th>Mvt Pts</th></tr></thead><tbody>${moveData.speedToBase.map(row => `<tr><td>${row.speed}</td><td>${row.points}</td></tr>`).join('')}</tbody></table><table class="movement-table"><thead><tr><th>Terrain</th><th>Cost (S/D)</th></tr></thead><tbody>${moveData.groundCost.map(row => `<tr><td>${row.terrain}</td><td>${row.straight} / ${row.diagonal}</td></tr>`).join('')}</tbody></table><div class="movement-links"><span class="clickable" data-modal-type="flying">Flying Movement</span><br><span class="clickable" data-modal-type="diagonal">Diagonal Exception</span></div>
+                    </div>
+                </details>
+                <details open>
+                    <summary>Heroes</summary>
+                    <div class="panel-content">
+                        <table class="hero-table"><thead><tr><th>Hero</th><th>Specialty</th><th>Skills</th></tr></thead><tbody>${heroesOfClass.map(hero => `<tr><td><div class="hero-name-cell clickable" data-hero-name="${hero.name}"><img class="hero-portrait" src="https://heroes.thelazy.net/images/thumb/e/e4/Hero_${hero.name.replace(/\s/g, '_')}.png/28px-Hero_${hero.name.replace(/\s/g, '_')}.png" alt="${hero.name}" onerror="this.style.display='none'"><strong>${hero.name}</strong></div></td><td class="clickable" data-specialty-name="${hero.specialty}" data-specialty-desc="${hero.specialty_description}">${hero.specialty}</td><td>${hero.skills.map(skill => `<div class="clickable" data-skill-name="${skill.replace(/^(Basic|Advanced|Expert)\s/, '')}">${skill}</div>`).join('')}</td></tr>`).join('')}</tbody></table>
+                    </div>
+                </details>
+            </div>
+        `;
+        attachMainContentListeners();
+    }
 
     // --- Creatures View Functions ---
     function populateFactionSidebar() {
@@ -155,10 +246,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function renderCreatureView(faction) {
-        document.querySelectorAll('#faction-sidebar .sidebar-button').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.faction === faction);
+    function populateFactionDropdown_Mobile() {
+        factionSidebar.innerHTML = '';
+        const select = document.createElement('select');
+        select.className = 'mobile-select';
+        select.addEventListener('change', (e) => renderCreatureView(e.target.value));
+
+        const factions = ["All", ...[...new Set(allCreatures.map(c => c.faction))].sort()];
+        factions.forEach(faction => {
+            const option = document.createElement('option');
+            option.value = faction;
+            option.textContent = faction === 'All' ? 'All Creatures' : faction;
+            select.appendChild(option);
         });
+        
+        const compareOptgroup = document.createElement('optgroup');
+        compareOptgroup.label = "Comparisons";
+        
+        const compareFactionsOption = document.createElement('option');
+        compareFactionsOption.value = 'Compare Factions';
+        compareFactionsOption.textContent = 'Compare Factions';
+        compareOptgroup.appendChild(compareFactionsOption);
+
+        const compareCreaturesOption = document.createElement('option');
+        compareCreaturesOption.value = 'Compare Creatures';
+        compareCreaturesOption.textContent = 'Compare Creatures';
+        compareOptgroup.appendChild(compareCreaturesOption);
+
+        select.appendChild(compareOptgroup);
+        factionSidebar.appendChild(select);
+    }
+
+    function renderCreatureView(faction) {
+        if (!isMobile) {
+            document.querySelectorAll('#faction-sidebar .sidebar-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.faction === faction);
+            });
+        }
         if (faction === "Compare Factions") {
             renderFactionComparisonView();
             return;
