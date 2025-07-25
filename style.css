@@ -53,7 +53,7 @@ body {
 
 .view {
     flex-grow: 1;
-    overflow: hidden; /* Important for flexbox layout */
+    overflow: hidden;
 }
 .view-hidden {
     display: none;
@@ -66,7 +66,7 @@ body {
 
 /* --- Sidebars (Heroes & Creatures) --- */
 #class-sidebar, #faction-sidebar {
-    width: 180px; /* Increased width slightly for the new layout */
+    width: 180px;
     background-color: var(--panel-bg-color);
     border-right: 2px solid var(--border-color);
     padding: 1rem;
@@ -75,7 +75,6 @@ body {
     overflow-y: auto;
 }
 
-/* NEW: Styles for Faction Tabs */
 .faction-tab {
     margin-bottom: 10px;
 }
@@ -105,13 +104,11 @@ body {
 
 .class-sub-tabs {
     padding-top: 8px;
-    padding-left: 15px; /* Indent the class buttons */
+    padding-left: 15px;
 }
 .class-sub-tabs.hidden {
     display: none;
 }
-/* END NEW */
-
 
 .sidebar-button {
     display: block; width: 100%; padding: 10px; margin-bottom: 10px;
@@ -130,7 +127,6 @@ body {
     margin: 1rem 0;
 }
 
-/* MODIFIED: Specific styles for the class sub-tabs */
 #class-sidebar .sidebar-button {
     margin-bottom: 6px;
     padding: 8px 10px;
@@ -143,29 +139,70 @@ body {
     flex-grow: 1; padding: 1.5rem; overflow-y: auto;
 }
 
-.page-grid {
-    display: grid;
-    grid-template-columns: 200px 200px 1fr;
-    gap: 1.5rem;
-    grid-template-areas:
-        "class-primary-skills magic-chance heroes"
-        "movement-info skills-info heroes";
+.panel {
+    background-color: var(--panel-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 1rem;
 }
 
-.panel {
-    background-color: var(--panel-bg-color); border: 1px solid var(--border-color);
-    border-radius: 4px; padding: 1rem;
-}
 .panel h2 {
     margin-top: 0; color: var(--accent-color); font-size: 1.1rem; text-align: center;
     border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.5rem;
 }
 
-#class-primary-skills-panel { grid-area: class-primary-skills; }
-#movement-panel { grid-area: movement-info; }
-#magic-chance-panel { grid-area: magic-chance; }
-#secondary-skills-panel { grid-area: skills-info; }
-#heroes-panel { grid-area: heroes; }
+/* --- Tiered Responsive Layout for Heroes View --- */
+
+/* Mobile First: Single Column Stack */
+.page-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Tablet: Two-column Flex Wrap */
+@media (min-width: 769px) {
+    .page-grid {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+    .panel {
+        flex-grow: 1;
+    }
+    #class-primary-skills-panel, #magic-chance-panel, #movement-panel, #secondary-skills-panel {
+        flex-basis: 220px;
+    }
+    #heroes-panel {
+        flex-basis: 450px;
+    }
+}
+
+/* Desktop: Restore the efficient Grid Layout */
+@media (min-width: 1200px) {
+    .page-grid {
+        display: grid;
+        grid-template-columns: 220px 220px 1fr;
+        gap: 1.5rem;
+        grid-template-areas:
+            "class-primary-skills magic-chance heroes"
+            "movement-info skills-info heroes";
+    }
+
+    /* Reset flex properties from tablet view */
+    .panel {
+        flex-basis: auto;
+        flex-grow: 0;
+    }
+    
+    #class-primary-skills-panel { grid-area: class-primary-skills; }
+    #movement-panel { grid-area: movement-info; }
+    #magic-chance-panel { grid-area: magic-chance; }
+    #secondary-skills-panel { grid-area: skills-info; }
+    #heroes-panel { grid-area: heroes; }
+}
+/* --- End of Tiered Layout --- */
+
 
 .info-table {
     width: 100%; border-collapse: collapse; font-size: 0.9rem;
@@ -235,9 +272,6 @@ body {
 #creature-content {
     flex-grow: 1; padding: 1.5rem; overflow-y: auto;
 }
-.creature-table-wrapper {
-    overflow-x: auto; /* Allows table to scroll horizontally on small screens */
-}
 .creature-table {
     width: 100%;
     border-collapse: collapse;
@@ -248,7 +282,6 @@ body {
     border-bottom: 1px solid var(--border-color);
     text-align: left;
     vertical-align: middle;
-    white-space: nowrap; /* Prevents text from wrapping in table cells */
 }
 .creature-table th {
     color: var(--text-secondary-color);
@@ -262,10 +295,6 @@ body {
 }
 .creature-table .creature-name {
     font-weight: bold;
-    white-space: normal; /* Allows creature names to wrap if needed */
-}
-.creature-table td:last-child {
-    white-space: normal; /* Allows the 'Special' column to wrap */
 }
 .placeholder-panel {
     padding: 3rem;
@@ -281,51 +310,32 @@ body {
 }
 
 /* --- Mobile Responsiveness --- */
-@media (max-width: 1024px) {
-    .page-grid {
-        grid-template-columns: 1fr 1fr;
-        grid-template-areas:
-            "class-primary-skills magic-chance"
-            "movement-info skills-info"
-            "heroes heroes";
-    }
-}
 @media (max-width: 768px) {
-    .sub-view-container {
-        flex-direction: column; /* Stacks sidebar and content vertically */
+    .sub-view-container { 
+        flex-direction: column; 
     }
+
     #class-sidebar, #faction-sidebar {
         width: 100%;
-        height: auto; /* Allow sidebar height to be determined by its content */
         border-right: none;
         border-bottom: 2px solid var(--border-color);
-        display: flex;
-        flex-direction: row; /* Make buttons align horizontally */
-        overflow-x: auto; /* Allow sidebar to scroll horizontally */
+        flex-direction: row;
+        overflow-x: auto;
         padding: 0.5rem;
-        flex-shrink: 0;
         align-items: center;
-    }
-    #class-sidebar {
-        flex-direction: column; /* Heroes sidebar needs vertical stacking for faction tabs */
-        align-items: stretch;
-    }
-    #faction-sidebar .sidebar-button,
-    #class-sidebar .faction-tab {
-        flex-shrink: 0; /* Prevent buttons from shrinking */
-        margin: 0 5px;
-    }
-    #class-sidebar .faction-tab {
-        min-width: 150px;
+        white-space: nowrap;
     }
 
-    .page-grid {
-        display: flex; /* Switch from grid to flexbox for simple stacking */
-        flex-direction: column;
+    #class-sidebar .faction-tab, #faction-sidebar .sidebar-button {
+        flex-shrink: 0;
+        margin: 0 4px;
     }
 
-    #main-content, #creature-content {
-        padding: 1rem; /* Reduce padding on small screens */
+    #class-sidebar .class-sub-tabs {
+        display: inline-flex;
+        padding: 0;
+        border: none;
+        margin-left: 5px;
     }
 }
 
@@ -375,4 +385,72 @@ body {
 }
 #modal-body .modal-table th {
     background-color: var(--highlight-bg);
+}
+
+/* Responsive "Card" layout for the creature table on mobile */
+@media (max-width: 768px) {
+    .creature-table thead {
+        display: none;
+    }
+
+    .creature-table tr, .creature-table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .creature-table tr {
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding-bottom: 0.5rem;
+    }
+    
+    .creature-table .upgraded-row {
+        background-color: var(--highlight-bg);
+    }
+
+    .creature-table td:nth-of-type(2) {
+        background-color: var(--highlight-bg);
+        font-size: 1.1rem;
+        text-align: center !important;
+        padding: 10px;
+    }
+     .creature-table td:nth-of-type(2).creature-name {
+        font-weight: bold;
+    }
+    
+    .creature-table .upgraded-row td:nth-of-type(2) {
+        background-color: #4f4f4f;
+    }
+
+    .creature-table td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+    }
+
+    .creature-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        text-align: left;
+        font-weight: bold;
+        color: var(--text-secondary-color);
+    }
+    
+    .creature-table td:nth-of-type(1)::before { content: 'Level'; }
+    .creature-table td:nth-of-type(3)::before { content: 'Attack'; }
+    .creature-table td:nth-of-type(4)::before { content: 'Defense'; }
+    .creature-table td:nth-of-type(5)::before { content: 'Damage'; }
+    .creature-table td:nth-of-type(6)::before { content: 'HP'; }
+    .creature-table td:nth-of-type(7)::before { content: 'Speed'; }
+    .creature-table td:nth-of-type(8)::before { content: 'Growth'; }
+    .creature-table td:nth-of-type(9)::before { content: 'AI Value'; }
+    .creature-table td:nth-of-type(10)::before { content: 'Cost'; }
+    .creature-table td:nth-of-type(11)::before { content: 'Special'; }
+
+    .creature-table td:nth-of-type(1) {
+        border-bottom: 1px solid var(--border-color);
+    }
 }
