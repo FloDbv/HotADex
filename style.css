@@ -65,7 +65,7 @@ body {
 }
 
 /* --- Sidebars (Desktop/Tablet) --- */
-#class-sidebar, #faction-sidebar {
+#class-sidebar, #faction-sidebar, #school-sidebar {
     width: 180px;
     background-color: var(--panel-bg-color);
     border-right: 2px solid var(--border-color);
@@ -273,6 +273,49 @@ body {
     font-size: 0.9rem;
 }
 
+/* --- Spells View Specific Styles --- */
+#spell-content {
+    flex-grow: 1; padding: 1.5rem; overflow-y: auto;
+}
+#spell-content .panel h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    color: var(--text-secondary-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.25rem;
+}
+#spell-content .panel h3:first-of-type {
+    margin-top: 0;
+}
+.spell-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+.spell-list-table th, .spell-list-table td {
+    padding: 8px 5px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    vertical-align: top;
+}
+.spell-list-table th {
+    color: var(--text-secondary-color);
+    font-weight: normal;
+}
+.spell-list-table .spell-name {
+    font-weight: bold;
+    cursor: pointer;
+}
+.spell-list-table .spell-name:hover {
+    color: var(--accent-color);
+}
+.spell-list-table td:nth-child(1) { width: 20%; }
+.spell-list-table td:nth-child(2) { width: 10%; }
+.spell-list-table td:nth-child(3) { width: 15%; }
+.spell-list-table td:nth-child(4) { width: 55%; }
+
+
 /* --- Modal Styling --- */
 #modal.modal-hidden { display: none; }
 #modal {
@@ -292,6 +335,7 @@ body {
 #modal-body h3 { color: var(--accent-color); margin-top: 0; }
 #modal-body h4 { color: var(--accent-color); margin-bottom: 0.5rem; }
 #modal-body p, #modal-body li { line-height: 1.6; }
+#modal-body ul { padding-left: 20px; margin-top: 0.5rem; }
 #modal-body .hota-details summary {
     cursor: pointer;
     font-weight: bold;
@@ -330,7 +374,7 @@ body {
     body {
         font-size: 13px; /* Smaller base font for mobile */
     }
-    #main-content, #creature-content {
+    #main-content, #creature-content, #spell-content {
         padding: 0.75rem; /* Tighter padding */
     }
     .tab-button {
@@ -342,7 +386,7 @@ body {
     .sub-view-container { 
         flex-direction: column; 
     }
-    #class-sidebar, #faction-sidebar {
+    #class-sidebar, #faction-sidebar, #school-sidebar {
         width: 100%;
         height: auto;
         border-right: none;
@@ -419,6 +463,14 @@ body {
     .hero-table .hero-portrait {
         width: 24px; height: 24px; margin-right: 5px;
     }
+    .spell-list-table {
+        font-size: 0.8rem;
+    }
+    .spell-list-table td, .spell-list-table th {
+        padding: 5px 3px;
+        width: auto !important;
+    }
+
 
     /* --- Responsive "Card" layout for the creature table --- */
     .creature-table thead {
