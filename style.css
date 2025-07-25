@@ -64,7 +64,7 @@ body {
     height: 100%;
 }
 
-/* --- Sidebars (Heroes & Creatures) --- */
+/* --- Sidebars (Desktop/Tablet) --- */
 #class-sidebar, #faction-sidebar {
     width: 180px;
     background-color: var(--panel-bg-color);
@@ -152,55 +152,19 @@ body {
 }
 
 /* --- Tiered Responsive Layout for Heroes View --- */
-
-/* Mobile First: Single Column Stack */
 .page-grid {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 220px 220px 1fr;
     gap: 1.5rem;
+    grid-template-areas:
+        "class-primary-skills magic-chance heroes"
+        "movement-info skills-info heroes";
 }
-
-/* Tablet: Two-column Flex Wrap */
-@media (min-width: 769px) {
-    .page-grid {
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: flex-start;
-    }
-    .panel {
-        flex-grow: 1;
-    }
-    #class-primary-skills-panel, #magic-chance-panel, #movement-panel, #secondary-skills-panel {
-        flex-basis: 220px;
-    }
-    #heroes-panel {
-        flex-basis: 450px;
-    }
-}
-
-/* Desktop: Restore the efficient Grid Layout */
-@media (min-width: 1200px) {
-    .page-grid {
-        display: grid;
-        grid-template-columns: 220px 220px 1fr;
-        gap: 1.5rem;
-        grid-template-areas:
-            "class-primary-skills magic-chance heroes"
-            "movement-info skills-info heroes";
-    }
-
-    /* Reset flex properties from tablet view */
-    .panel {
-        flex-basis: auto;
-        flex-grow: 0;
-    }
-    
-    #class-primary-skills-panel { grid-area: class-primary-skills; }
-    #movement-panel { grid-area: movement-info; }
-    #magic-chance-panel { grid-area: magic-chance; }
-    #secondary-skills-panel { grid-area: skills-info; }
-    #heroes-panel { grid-area: heroes; }
-}
+#class-primary-skills-panel { grid-area: class-primary-skills; }
+#movement-panel { grid-area: movement-info; }
+#magic-chance-panel { grid-area: magic-chance; }
+#secondary-skills-panel { grid-area: skills-info; }
+#heroes-panel { grid-area: heroes; }
 /* --- End of Tiered Layout --- */
 
 
@@ -357,6 +321,7 @@ body {
     background-color: var(--highlight-bg);
 }
 
+
 /* ==========================================================================
    MOBILE OVERHAUL (Applies to screens smaller than 768px)
    ========================================================================== */
@@ -377,38 +342,66 @@ body {
     .sub-view-container { 
         flex-direction: column; 
     }
-
     #class-sidebar, #faction-sidebar {
         width: 100%;
+        height: auto;
         border-right: none;
         border-bottom: 2px solid var(--border-color);
-        flex-direction: row;
-        overflow-x: auto;
         padding: 0.5rem;
-        align-items: center;
-        white-space: nowrap;
+    }
+    .page-grid {
+        display: block; /* Disable grid/flex for mobile */
     }
 
-    #class-sidebar .faction-tab, #faction-sidebar .sidebar-button {
-        flex-shrink: 0;
-        margin: 0 4px;
-    }
-
-    #class-sidebar .class-sub-tabs {
-        display: inline-flex;
-        padding: 0;
-        border: none;
-        margin-left: 5px;
-    }
-
-    /* --- Mobile Panel Compacting --- */
-    .panel {
-        padding: 0.75rem;
-    }
-    .panel h2 {
+    /* --- Mobile Dropdown Navigation --- */
+    .mobile-select {
+        width: 100%;
+        padding: 10px;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
         font-size: 1rem;
-        padding-bottom: 0.4rem;
-        margin-bottom: 0.4rem;
+    }
+    /* Hide desktop sidebar elements */
+    .faction-tab, .sidebar-button, .sidebar-divider {
+        display: none;
+    }
+
+    /* --- Mobile Accordion for Heroes View --- */
+    .mobile-accordion details {
+        background-color: var(--panel-bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        margin-bottom: 0.75rem;
+    }
+    .mobile-accordion summary {
+        padding: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        color: var(--accent-color);
+        font-size: 1rem;
+        list-style: none; /* Remove default marker */
+        position: relative;
+    }
+    .mobile-accordion summary::-webkit-details-marker {
+        display: none; /* For Chrome/Safari */
+    }
+    .mobile-accordion summary::after { /* Custom arrow */
+        content: '▶';
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%) rotate(0deg);
+        transition: transform 0.2s;
+        font-size: 0.8em;
+    }
+    .mobile-accordion details[open] > summary::after {
+        transform: translateY(-50%) rotate(90deg);
+    }
+    .mobile-accordion .panel-content {
+        padding: 0 12px 12px 12px;
+        border-top: 1px solid var(--border-color);
     }
 
     /* --- Mobile Table Readability --- */
@@ -418,65 +411,47 @@ body {
     .hero-table th, .hero-table td {
         padding: 5px 3px;
     }
+    /* Mobile Hero Table - Hide less important columns */
+    .hero-table thead tr th:nth-child(4), .hero-table tbody tr td:nth-child(4),
+    .hero-table thead tr th:nth-child(5), .hero-table tbody tr td:nth-child(5) {
+        display: none;
+    }
     .hero-table .hero-portrait {
-        width: 24px;
-        height: 24px;
-        margin-right: 5px;
+        width: 24px; height: 24px; margin-right: 5px;
     }
 
     /* --- Responsive "Card" layout for the creature table --- */
     .creature-table thead {
         display: none;
     }
-
     .creature-table tr, .creature-table td {
-        display: block;
-        width: 100%;
-        box-sizing: border-box;
+        display: block; width: 100%; box-sizing: border-box;
     }
-
     .creature-table tr {
-        margin-bottom: 1rem;
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        padding-bottom: 0.5rem;
+        margin-bottom: 1rem; border: 1px solid var(--border-color);
+        border-radius: 4px; padding-bottom: 0.5rem;
     }
-    
     .creature-table .upgraded-row {
         background-color: var(--highlight-bg);
     }
-
     .creature-table td:nth-of-type(2) {
-        background-color: var(--highlight-bg);
-        font-size: 1rem;
-        text-align: center !important;
-        padding: 8px;
+        background-color: var(--highlight-bg); font-size: 1rem;
+        text-align: center !important; padding: 8px;
     }
-     .creature-table td:nth-of-type(2).creature-name {
+    .creature-table td:nth-of-type(2).creature-name {
         font-weight: bold;
     }
-    
     .creature-table .upgraded-row td:nth-of-type(2) {
         background-color: #4f4f4f;
     }
-
     .creature-table td {
-        text-align: right;
-        padding-left: 50%;
-        position: relative;
-        padding-top: 6px;
-        padding-bottom: 6px;
+        text-align: right; padding-left: 50%; position: relative;
+        padding-top: 6px; padding-bottom: 6px;
     }
-
     .creature-table td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 8px;
-        text-align: left;
-        font-weight: bold;
-        color: var(--text-secondary-color);
+        content: attr(data-label); position: absolute; left: 8px;
+        text-align: left; font-weight: bold; color: var(--text-secondary-color);
     }
-    
     .creature-table td:nth-of-type(1)::before { content: 'Level'; }
     .creature-table td:nth-of-type(3)::before { content: 'Attack'; }
     .creature-table td:nth-of-type(4)::before { content: 'Defense'; }
@@ -487,7 +462,6 @@ body {
     .creature-table td:nth-of-type(9)::before { content: 'AI Value'; }
     .creature-table td:nth-of-type(10)::before { content: 'Cost'; }
     .creature-table td:nth-of-type(11)::before { content: 'Special'; }
-
     .creature-table td:nth-of-type(1) {
         border-bottom: 1px solid var(--border-color);
     }
