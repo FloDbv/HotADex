@@ -65,7 +65,7 @@ body {
 }
 
 /* --- Sidebars (Desktop/Tablet) --- */
-#class-sidebar, #faction-sidebar, #school-sidebar {
+#class-sidebar, #faction-sidebar, #school-sidebar, #map-objects-sidebar {
     width: 180px;
     background-color: var(--panel-bg-color);
     border-right: 2px solid var(--border-color);
@@ -315,6 +315,53 @@ body {
 .spell-list-table td:nth-child(3) { width: 15%; }
 .spell-list-table td:nth-child(4) { width: 55%; }
 
+/* --- Map Objects View Specific Styles --- */
+#map-objects-content {
+    flex-grow: 1; padding: 1.5rem; overflow-y: auto;
+}
+.map-objects-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+.map-objects-table th, .map-objects-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    vertical-align: top;
+}
+.map-objects-table th {
+    color: var(--text-secondary-color);
+    font-weight: normal;
+    position: sticky;
+    top: 0;
+    background-color: var(--panel-bg-color);
+}
+.map-objects-table .clickable:hover {
+    background-color: var(--highlight-bg);
+}
+.map-objects-table td:nth-child(1) { width: 15%; font-weight: bold; } /* Name */
+.map-objects-table td:nth-child(2) { width: 20%; } /* Guards */
+.map-objects-table td:nth-child(3) { width: 65%; } /* Rewards */
+
+.rewards-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.rewards-list li {
+    margin-bottom: 4px;
+}
+.rewards-list li:last-child {
+    margin-bottom: 0;
+}
+.reward-label {
+    font-weight: bold;
+    color: var(--text-secondary-color);
+    display: inline-block;
+    width: 80px;
+}
+
 
 /* --- Modal Styling --- */
 #modal.modal-hidden { display: none; }
@@ -374,7 +421,7 @@ body {
     body {
         font-size: 13px; /* Smaller base font for mobile */
     }
-    #main-content, #creature-content, #spell-content {
+    #main-content, #creature-content, #spell-content, #map-objects-content {
         padding: 0.75rem; /* Tighter padding */
     }
     .tab-button {
@@ -386,7 +433,7 @@ body {
     .sub-view-container { 
         flex-direction: column; 
     }
-    #class-sidebar, #faction-sidebar, #school-sidebar {
+    #class-sidebar, #faction-sidebar, #school-sidebar, #map-objects-sidebar {
         width: 100%;
         height: auto;
         border-right: none;
@@ -469,6 +516,19 @@ body {
     .spell-list-table td, .spell-list-table th {
         padding: 5px 3px;
         width: auto !important;
+    }
+
+    .map-objects-table td:nth-child(1) { width: 30%; }
+    .map-objects-table td:nth-child(2) { width: 70%; }
+    .map-objects-table td:nth-child(3) { display: none; } /* Hide rewards column */
+    .map-objects-table .rewards-list { display: none; } /* Hide rewards list on mobile */
+    .map-objects-table td:nth-child(2)::after {
+        content: attr(data-rewards);
+        display: block;
+        white-space: pre-line;
+        font-size: 0.8em;
+        color: var(--text-secondary-color);
+        padding-top: 4px;
     }
 
 
