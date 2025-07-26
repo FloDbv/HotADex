@@ -148,7 +148,7 @@ body {
 
 .panel h2 {
     margin-top: 0; color: var(--accent-color); font-size: 1.1rem; text-align: center;
-    border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.25rem;
 }
 
 /* --- Tiered Responsive Layout for Heroes View --- */
@@ -319,6 +319,19 @@ body {
 #map-objects-content {
     flex-grow: 1; padding: 1.5rem; overflow-y: auto;
 }
+.panel-subtitle {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-secondary-color);
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.panel-subtitle:hover {
+    color: var(--accent-color);
+}
 .map-objects-table {
     width: 100%;
     border-collapse: collapse;
@@ -410,6 +423,13 @@ body {
 }
 #modal-body .modal-table th {
     background-color: var(--highlight-bg);
+}
+#modal-body img.battlefield-image {
+    display: block;
+    max-width: 100%;
+    margin: 0 auto 1rem auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
 }
 
 
