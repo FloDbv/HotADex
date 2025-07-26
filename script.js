@@ -449,6 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mapObjectsContent.innerHTML = `
             <div class="panel">
                 <h2>Creature Banks</h2>
+                <h4 class="panel-subtitle clickable" data-modal-type="creature-bank-battle-info">Battle Information</h4>
                 <table class="map-objects-table">
                     <thead>
                         <tr>
@@ -714,6 +715,19 @@ document.addEventListener('DOMContentLoaded', () => {
         showModal();
     }
 
+    function displayCreatureBankBattleInfo() {
+        const title = 'Creature Bank Battle Information';
+        const content = `
+            <img src="CreatureBankBattle.gif" alt="Creature Bank Battlefield Layout" class="battlefield-image">
+            <p>In all Creature Banks except Black Towers, the guards are divided into five stacks of (red hexes). When there is an upstack, it will be in the lower left corner (C). All the guard stacks of the same speed attack in alphabetic order: from A to E. In Horn of the Abyss, the object's level can be preset by a map-maker, and the upgraded stack option may be toggled on or off.</p>
+            <p>The hero's troops are located in blue hexes 1-7 (a tail hex for two-hexed creatures) according to stack positioning in the army slots 1-7. But if the hero has less than 7 stacks, e.g. 3, they will be placed in hexes 1-3 no matter how they were placed in the army slots.</p>
+            <p>Though war machines are not present on the battlefield, they still provide their passive bonuses (i.e. the infinite shots effect from Ammo Cart and the First Aid/First Aid Tent health boost ).</p>
+            <p>Slain enemies do not respawn (should the hero retreat or be defeated). The damaged stack's losses will not be redistributed among the others. If a stack was destroyed, it changes the guards disposition. Its place on the battlefield will be taken by the next one in the attacking order. (E.g.: If A stack was destroyed, B stack takes its place, C stack takes the freshly vacated place of B and so on).</p>
+        `;
+        modalBody.innerHTML = `<h3>${title}</h3>${content}`;
+        showModal();
+    }
+
     function attachMainContentListeners() {
         mainContent.querySelectorAll('.clickable[data-hero-name]').forEach(el => {
             el.addEventListener('click', (e) => displayHeroDetails(e.currentTarget.dataset.heroName));
@@ -762,6 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mapObjectsContent.querySelectorAll('.clickable[data-bank-name]').forEach(el => {
             el.addEventListener('click', (e) => displayCreatureBankDetails(e.currentTarget.dataset.bankName));
         });
+        mapObjectsContent.querySelector('.clickable[data-modal-type="creature-bank-battle-info"]')?.addEventListener('click', displayCreatureBankBattleInfo);
     }
 
     function setupEventListeners() {
