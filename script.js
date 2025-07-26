@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const moveData = movementData;
     const allCreatures = creaturesData;
     const allSpells = spellsData;
+    const creatureBanks = creatureBanksData;
 
     // --- DOM Elements ---
     const tabButtons = document.querySelectorAll('.tab-button');
@@ -27,6 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const schoolSidebar = document.getElementById('school-sidebar');
     const spellContent = document.getElementById('spell-content');
 
+    // Map Objects View Elements
+    const mapObjectsSidebar = document.getElementById('map-objects-sidebar');
+    const mapObjectsContent = document.getElementById('map-objects-content');
+
+
     // --- Mobile Detection ---
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
@@ -41,6 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderCreatureView('All');
             populateSchoolDropdown_Mobile();
             renderSpellView('Air');
+            populateMapObjectsDropdown_Mobile();
+            renderCreatureBanksView();
         } else {
             populateClassSidebar();
             renderClassView(Object.keys(classes)[0]);
@@ -48,6 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderCreatureView('All');
             populateSchoolSidebar();
             renderSpellView('Air');
+            populateMapObjectsSidebar();
+            renderCreatureBanksView();
         }
     }
 
@@ -399,6 +409,68 @@ document.addEventListener('DOMContentLoaded', () => {
         attachSpellContentListeners();
     }
 
+    // --- Map Objects View Functions ---
+    function populateMapObjectsSidebar() {
+        mapObjectsSidebar.innerHTML = `<button class="sidebar-button active" data-object-type="Creature Banks">Creature Banks</button>`;
+        // Future object types can be added here
+    }
+
+    function populateMapObjectsDropdown_Mobile() {
+        mapObjectsSidebar.innerHTML = '';
+        const select = document.createElement('select');
+        select.className = 'mobile-select';
+        const option = document.createElement('option');
+        option.value = 'Creature Banks';
+        option.textContent = 'Creature Banks';
+        select.appendChild(option);
+        mapObjectsSidebar.appendChild(select);
+    }
+
+    function renderCreatureBanksView() {
+        const rewardsHTML = (rewards) => {
+            let listItems = '';
+            if (rewards.creatures) listItems += `<li><span class="reward-label">Creatures:</span>${rewards.creatures}</li>`;
+            if (rewards.artifacts) listItems += `<li><span class="reward-label">Artifacts:</span>${rewards.artifacts}</li>`;
+            if (rewards.gold) listItems += `<li><span class="reward-label">Gold:</span>${rewards.gold}</li>`;
+            if (rewards.resources) listItems += `<li><span class="reward-label">Resources:</span>${rewards.resources}</li>`;
+            if (rewards.experience) listItems += `<li><span class="reward-label">Experience:</span>${rewards.experience}</li>`;
+            return listItems ? `<ul class="rewards-list">${listItems}</ul>` : '–';
+        };
+        const rewardsDataAttr = (rewards) => {
+            let rewardsText = [];
+            if (rewards.creatures) rewardsText.push(`Creatures: ${rewards.creatures}`);
+            if (rewards.artifacts) rewardsText.push(`Artifacts: ${rewards.artifacts}`);
+            if (rewards.gold) rewardsText.push(`Gold: ${rewards.gold}`);
+            if (rewards.resources) rewardsText.push(`Resources: ${rewards.resources}`);
+            if (rewards.experience) rewardsText.push(`Experience: ${rewards.experience}`);
+            return rewardsText.join('\n');
+        };
+
+        mapObjectsContent.innerHTML = `
+            <div class="panel">
+                <h2>Creature Banks</h2>
+                <table class="map-objects-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Guards</th>
+                            <th>Rewards</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${creatureBanks.map(bank => `
+                            <tr class="clickable" data-bank-name="${bank.name}">
+                                <td>${bank.name}</td>
+                                <td data-rewards="${rewardsDataAttr(bank.rewards)}">${bank.guards}</td>
+                                <td>${rewardsHTML(bank.rewards)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>`;
+        attachMapObjectsContentListeners();
+    }
+
 
     // --- Comparison View Functions ---
     function renderFactionComparisonView() {
@@ -598,6 +670,50 @@ document.addEventListener('DOMContentLoaded', () => {
         showModal();
     }
 
+    function displayCreatureBankDetails(bankName) {
+        const bank = creatureBanks.find(b => b.name === bankName);
+        if (!bank) return;
+
+        let levelsHTML = '';
+        if (bank.levels) {
+            const levelsContent = `
+                <table class="modal-table">
+                    <thead>
+                        <tr>
+                            <th>Level (Chance)</th>
+                            <th>Guards</th>
+                            <th>Rewards</th>
+                            <th>XP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${bank.levels.map(l => `
+                            <tr>
+                                <td>${l.level} (${l.level === 4 ? '10%' : '30%'})</td>
+                                <td>${l.guards}</td>
+                                <td>${l.rewards}</td>
+                                <td>${l.experience}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+            levelsHTML = `<details class="hota-details"><summary>${bank.name} Levels</summary><div class="details-content">${levelsContent}</div></details>`;
+        }
+
+        const terrainHTML = `<p><strong>Terrain:</strong> ${bank.terrain}</p>`;
+        const valueHTML = `<p><strong>Value:</strong> ${bank.value}</p>`;
+        const additionalInfoHTML = bank.additional_info ? `<p><strong>Notes:</strong> ${bank.additional_info}</p>` : '';
+
+        modalBody.innerHTML = `
+            <h3>${bank.name}</h3>
+            ${levelsHTML}
+            ${terrainHTML}
+            ${valueHTML}
+            ${additionalInfoHTML}
+        `;
+        showModal();
+    }
+
     function attachMainContentListeners() {
         mainContent.querySelectorAll('.clickable[data-hero-name]').forEach(el => {
             el.addEventListener('click', (e) => displayHeroDetails(e.currentTarget.dataset.heroName));
@@ -639,6 +755,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function attachSpellContentListeners() {
         spellContent.querySelectorAll('.clickable[data-spell-name]').forEach(el => {
             el.addEventListener('click', (e) => displaySpellDetails(e.currentTarget.dataset.spellName));
+        });
+    }
+
+    function attachMapObjectsContentListeners() {
+        mapObjectsContent.querySelectorAll('.clickable[data-bank-name]').forEach(el => {
+            el.addEventListener('click', (e) => displayCreatureBankDetails(e.currentTarget.dataset.bankName));
         });
     }
 
