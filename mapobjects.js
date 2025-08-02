@@ -40,16 +40,16 @@ const creatureBanksData = [
     guards: "1 Dragon",
     rewards: {
       creatures: null,
-      artifacts: null,
+      artifacts: "m",
       gold: "2000-3750",
       resources: null,
       experience: "180-300"
     },
     levels: [
-      { level: 1, guards: "1 Green Dragon", rewards: "2000 G", experience: "180" },
-      { level: 2, guards: "1 Red Dragon", rewards: "2250 G", experience: "180" },
-      { level: 3, guards: "1 Gold Dragon", rewards: "3500 G", experience: "250" },
-      { level: 4, guards: "1 Black Dragon", rewards: "3750 G", experience: "300" }
+      { level: 1, guards: "1 Green Dragon", rewards: "m, 2000 G", experience: "180" },
+      { level: 2, guards: "1 Red Dragon", rewards: "m, 2250 G", experience: "180" },
+      { level: 3, guards: "1 Gold Dragon", rewards: "m, 3500 G", experience: "250" },
+      { level: 4, guards: "1 Black Dragon", rewards: "m, 3750 G", experience: "300" }
     ],
     terrain: "Any dry land",
     value: "1500",
