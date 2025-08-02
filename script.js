@@ -730,15 +730,39 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderGrailView() {
         const artifactsContent = document.getElementById('artifacts-content');
         if (!artifactsContent) return;
-        let grailHTML = `<div class="panel"><h2>Grail</h2>`;
-        grailHTML += `<h3>General Effects</h3>`;
-        grailHTML += `<p><strong>Gold:</strong> ${grailInfo.general.gold}</p>`;
-        grailHTML += `<p><strong>Creature Growth:</strong> ${grailInfo.general.growth}</p>`;
-        grailHTML += `<h3>Faction-Specific Effects</h3>`;
-        grailHTML += `<table class="artifacts-table"><thead><tr><th>Faction</th><th>Building</th><th>Effect</th></tr></thead><tbody>`;
-        grailHTML += grailInfo.factions.map(f => `<tr><td>${f.name}</td><td>${f.building}</td><td>${f.effect}</td></tr>`).join('');
-        grailHTML += `</tbody></table></div>`;
-        artifactsContent.innerHTML = grailHTML;
+
+        if (isMobile) {
+            let grailHTML = `<div class="panel"><h2>Grail</h2>`;
+            grailHTML += `<h3>General Effects</h3>`;
+            grailHTML += `<p><strong>Gold:</strong> ${grailInfo.general.gold}</p>`;
+            grailHTML += `<p><strong>Creature Growth:</strong> ${grailInfo.general.growth}</p></div>`;
+
+            grailHTML += `<h3>Faction-Specific Effects</h3>`;
+            grailHTML += `<div class="mobile-card-list" style="margin-top: 0.75rem;">`;
+            grailHTML += grailInfo.factions.map(f => `
+                <div class="mobile-card artifact-card">
+                    <div class="card-header">
+                        <span class="card-title" style="text-decoration: none;">${f.name}</span>
+                    </div>
+                    <div class="card-body">
+                        <p><span class="label">Building:</span> ${f.building}</p>
+                        <p><span class="label">Effect:</span> ${f.effect}</p>
+                    </div>
+                </div>
+            `).join('');
+            grailHTML += `</div>`;
+            artifactsContent.innerHTML = grailHTML;
+        } else {
+            let grailHTML = `<div class="panel"><h2>Grail</h2>`;
+            grailHTML += `<h3>General Effects</h3>`;
+            grailHTML += `<p><strong>Gold:</strong> ${grailInfo.general.gold}</p>`;
+            grailHTML += `<p><strong>Creature Growth:</strong> ${grailInfo.general.growth}</p>`;
+            grailHTML += `<h3>Faction-Specific Effects</h3>`;
+            grailHTML += `<table class="artifacts-table"><thead><tr><th>Faction</th><th>Building</th><th>Effect</th></tr></thead><tbody>`;
+            grailHTML += grailInfo.factions.map(f => `<tr><td>${f.name}</td><td>${f.building}</td><td>${f.effect}</td></tr>`).join('');
+            grailHTML += `</tbody></table></div>`;
+            artifactsContent.innerHTML = grailHTML;
+        }
     }
 
     // --- Map Objects View Functions ---
