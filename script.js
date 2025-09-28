@@ -1,7 +1,7 @@
 
 // --- BRIDGE: structures unified dataset ---
 window.structuresData = window.structuresData || [];
-window.creatureBanksData = window.structuresData.filter(o => Array.isArray(o.categories) && o.categories.includes("Creature Banks"));
+window.creatureBanksData = (window.structuresData || []).filter(o => Array.isArray(o.categories) && o.categories.includes("Creature Banks"));
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Data ---
@@ -777,154 +777,568 @@ document.addEventListener('DOMContentLoaded', () => {
         mapObjectsSidebar.innerHTML = `<button class="sidebar-button active" data-object-type="Creature Banks">Creature Banks</button>`;
     }
 
-    // [removed old map objects renderer]
-);
+    function renderMapObjectsView(type) {
+        if (isMobile) {
+            renderMapObjectsView_Mobile(type);
+        } else {
+            renderMapObjectsView_Desktop(type);
+        }
+        attachMapObjectsContentListeners();
+    }
+
+    function renderMapObjectsView_Desktop(type) {
+        const mapObjectsContent = document.getElementById('map-objects-content');
+        if (!mapObjectsContent) return;
+        const rewardsHTML = (rewards) => {
+            let listItems = '';
+            if (rewards.creatures) listItems += `<li><span class="reward-label">Creatures:</span>${rewards.creatures}</li>`;
+            if (rewards.artifacts) listItems += `<li><span class="reward-label">Artifacts:</span>${rewards.artifacts}</li>`;
+            if (rewards.gold) listItems += `<li><span class="reward-label">Gold:</span>${rewards.gold}</li>`;
+            if (rewards.resources) listItems += `<li><span class="reward-label">Resources:</span>${rewards.resources}</li>`;
+            if (rewards.experience) listItems += `<li><span class="reward-label">Experience:</span>${rewards.experience}</li>`;
+            return listItems ? `<ul class="rewards-list">${listItems}</ul>` : '–';
+        };
+        const rewardsDataAttr = (rewards) => {
+            let rewardsText = [];
+            if (rewards.creatures) rewardsText.push(`Creatures: ${rewards.creatures}`);
+            if (rewards.artifacts) rewardsText.push(`Artifacts: ${rewards.artifacts}`);
+            if (rewards.gold) rewardsText.push(`Gold: ${rewards.gold}`);
+            if (rewards.resources) rewardsText.push(`Resources: ${rewards.resources}`);
+            if (rewards.experience) rewardsText.push(`Experience: ${rewards.experience}`);
+            return rewardsText.join('\n');
+        };
+        mapObjectsContent.innerHTML = `
+            <div class="panel">
+                <h2>Creature Banks</h2>
+                <h4 class="panel-subtitle clickable" data-modal-type="creature-bank-battle-info">Battle Information</h4>
+                <table class="map-objects-table"><thead><tr><th>Name</th><th>Guards</th><th>Rewards</th></tr></thead>
+                    <tbody>${creatureBanks.map(bank => `<tr id="${generateItemId('map-object', bank.name)}" class="clickable" data-bank-name="${bank.name}"><td>${bank.name}</td><td data-rewards="${rewardsDataAttr(bank.rewards)}">${bank.guards}</td><td>${rewardsHTML(bank.rewards)}</td></tr>`).join('')}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function renderMapObjectsView_Mobile(type) {
+        const mapObjectsContent = document.getElementById('map-objects-content');
+        if (!mapObjectsContent) return;
+        const rewardsHTML = (rewards) => {
+            let listItems = '';
+            if (rewards.creatures) listItems += `<li><span class="label">Creatures:</span> ${rewards.creatures}</li>`;
+            if (rewards.artifacts) listItems += `<li><span class="label">Artifacts:</span> ${rewards.artifacts}</li>`;
+            if (rewards.gold) listItems += `<li><span class="label">Gold:</span> ${rewards.gold}</li>`;
+            if (rewards.resources) listItems += `<li><span class="label">Resources:</span> ${rewards.resources}</li>`;
+            if (rewards.experience) listItems += `<li><span class="label">Experience:</span> ${rewards.experience}</li>`;
+            return listItems ? `<ul class="rewards-list">${listItems}</ul>` : '<p>No specific rewards.</p>';
+        };
+        const cardsHTML = creatureBanks.map(bank => `
+            <div id="${generateItemId('map-object', bank.name)}" class="mobile-card map-object-card clickable" data-bank-name="${bank.name}">
+                <div class="card-header">
+                    <span class="card-title">${bank.name}</span>
+                </div>
+                <div class="card-body">
+                    <p><span class="label">Guards:</span> ${bank.guards}</p>
+                    ${rewardsHTML(bank.rewards)}
+                </div>
+            </div>
+        `).join('');
+        mapObjectsContent.innerHTML = `<h4 class="panel-subtitle clickable" data-modal-type="creature-bank-battle-info">Battle Information</h4><div class="mobile-card-list">${cardsHTML}</div>`;
+    }
+
+    // --- Tavern Tips View Functions ---
+    function populateTavernTipsSidebar() {
+        const tavernTipsSidebar = document.getElementById('taverntips-sidebar');
+        if (!tavernTipsSidebar) return;
+        tavernTipsSidebar.innerHTML = '';
+        const keybindsTab = document.createElement('div');
+        keybindsTab.className = 'faction-tab';
+        const keybindsButton = document.createElement('button');
+        keybindsButton.className = 'faction-tab-button';
+        keybindsButton.textContent = 'Keybinds';
+        keybindsButton.dataset.category = 'Keybinds';
+        const subTabs = document.createElement('div');
+        subTabs.className = 'class-sub-tabs'; 
+        const categories = ["All", "Hero Trade Screen", "Hero Management Screen", "Adventure Screen", "Combat Screen", "Town Screen"];
+        categories.forEach(category => {
+            const button = document.createElement('button');
+            button.className = 'sidebar-button';
+            button.dataset.category = category;
+            button.textContent = category;
+            button.addEventListener('click', () => renderTavernTipsView(category));
+            subTabs.appendChild(button);
+        });
+        keybindsButton.addEventListener('click', () => renderTavernTipsView('All'));
+        keybindsTab.appendChild(keybindsButton);
+        keybindsTab.appendChild(subTabs);
+        tavernTipsSidebar.appendChild(keybindsTab);
+    }
+
+    function renderTavernTipsView(category) {
+        const tavernTipsContent = document.getElementById('taverntips-content');
+        if (!tavernTipsContent) return;
+        if (!isMobile) {
+            document.querySelectorAll('#taverntips-sidebar .sidebar-button').forEach(btn => btn.classList.remove('active'));
+            const activeButton = document.querySelector(`#taverntips-sidebar .sidebar-button[data-category="${category}"]`);
+            if (activeButton) activeButton.classList.add('active');
+            const mainButton = document.querySelector('#taverntips-sidebar .faction-tab-button');
+            if (mainButton) mainButton.classList.add('active');
+        }
+        const renderCategoryHTML = (title, keybindsArray) => {
+            if (!keybindsArray || keybindsArray.length === 0) return '';
+            let tableRows = keybindsArray.map(kb => `<tr><td>${kb.key}</td><td>${kb.action}</td></tr>`).join('');
+            return `<h3>${title}</h3><table class="keybinds-table"><thead><tr><th>Key</th><th>Action</th></tr></thead><tbody>${tableRows}</tbody></table>`;
+        };
+        let contentHTML = '<div class="panel">';
+        const categoryOrder = ["Hero Trade Screen", "Hero Management Screen", "Adventure Screen", "Combat Screen", "Town Screen"];
+        if (category === 'All') {
+            categoryOrder.forEach(catName => {
+                contentHTML += renderCategoryHTML(catName, tavernTips.keybinds[catName]);
+            });
+        } else {
+            contentHTML += renderCategoryHTML(category, tavernTips.keybinds[category]);
+        }
+        contentHTML += '</div>';
+        tavernTipsContent.innerHTML = contentHTML;
+    }
+
+
+    // --- Comparison View Functions ---
+    function renderCreatureComparisonView() {
+        const creatureContent = document.getElementById('creature-content');
+        if (!creatureContent) return;
+        creatureContent.innerHTML = `<div class="panel"><h2>Compare Creatures</h2><div id="creature-selectors" style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;"></div><div id="creature-comparison-table"></div></div>`;
+        const selectorsContainer = document.getElementById('creature-selectors');
+        const tableContainer = document.getElementById('creature-comparison-table');
+        const creatureOptions = allCreatures.map(c => `<option value="${c.name}">${c.name} (${c.faction.slice(0, 3)})</option>`).join('');
+        for (let i = 1; i <= 4; i++) {
+            selectorsContainer.innerHTML += `<select id="creature-select-${i}" data-index="${i}" style="flex: 1; min-width: 150px; padding: 8px; background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color);"><option value="">Select Creature ${i}</option>${creatureOptions}</select>`;
+        }
+        const updateCreatureComparison = () => {
+            const selectedCreatures = [];
+            for (let i = 1; i <= 4; i++) {
+                const select = document.getElementById(`creature-select-${i}`);
+                if (select.value) {
+                    selectedCreatures.push(allCreatures.find(c => c.name === select.value));
+                }
+            }
+            if (selectedCreatures.length === 0) {
+                tableContainer.innerHTML = '';
+                return;
+            }
+            const stats = ['Att', 'Def', 'Dmg', 'HP', 'Spd', 'Grw', 'AI', 'Cost', 'Special'];
+            tableContainer.innerHTML = `<table class="creature-table" style="display: table;"><thead><tr><th>Stat</th>${selectedCreatures.map(c => `<th>${c.name}</th>`).join('')}</tr></thead><tbody>${stats.map(stat => `<tr><td class="creature-name">${stat}</td>${selectedCreatures.map(c => { let val; if (stat === 'Dmg') { val = `${c.dmg_min}-${c.dmg_max}`; } else if (stat === 'Special') { val = c.special ? c.special.name : '–'; } else if (stat === 'Cost') { val = formatCost(c.cost); } else if (stat === 'AI') { val = c.ai_val; } else { val = c[stat.toLowerCase()]; } return `<td>${val}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+        };
+        for (let i = 1; i <= 4; i++) {
+            document.getElementById(`creature-select-${i}`).addEventListener('change', updateCreatureComparison);
+        }
+    }
+
+    // --- Modal & Event Listener Logic ---
+    function showModal() { modal.classList.remove('modal-hidden'); }
+    function hideModal() { modal.classList.add('modal-hidden'); modalBody.innerHTML = ''; }
+
+    function displayHeroDetails(heroName) {
+        const hero = heroes.find(h => h.name === heroName);
+        if (!hero) return;
+        const biographyHTML = hero.biography ? `<details><summary>Biography</summary><div class="details-content"><p>${hero.biography}</p></div></details>` : '';
+        const analysisHTML = (hero.gameplay_analysis && hero.gameplay_analysis.trim() !== "") ? `<details><summary>Gameplay Analysis</summary><div class="details-content">${hero.gameplay_analysis}</div></details>` : '';
+        modalBody.innerHTML = `<h3>${hero.name}</h3>${biographyHTML}${analysisHTML}`;
+        showModal();
+    }
+
+    function displaySkillDetails(skillName) {
+        const skill = skills[skillName];
+        if (!skill) return;
+        const descriptionHTML = `<ul><li><strong>Basic:</strong> ${skill.description.Basic}</li><li><strong>Advanced:</strong> ${skill.description.Advanced}</li><li><strong>Expert:</strong> ${skill.description.Expert}</li></ul>`;
+        const hotaDetailsHTML = skill.hota_changes ? `<details class="hota-details"><summary>HotA Specific Changes</summary><div class="details-content">${skill.hota_changes}</div></details>` : '';
+        const gameplayAnalysisHTML = skill.gameplay_analysis ? `<details class="hota-details"><summary>Gameplay Analysis</summary><div class="details-content">${skill.gameplay_analysis}</div></details>` : '';
+        modalBody.innerHTML = `<h3>${skillName}</h3>${descriptionHTML}${hotaDetailsHTML}${gameplayAnalysisHTML}`;
+        showModal();
+    }
+
+    function displayCreatureDetails(creatureName) {
+        const creature = allCreatures.find(c => c.name === creatureName);
+        if (!creature) return;
+        const analysisHTML = creature.gameplay_analysis ? `<details class="hota-details"><summary>Gameplay Analysis</summary><div class="details-content"><p>${creature.gameplay_analysis}</p></div></details>` : '';
+        const loreHTML = creature.lore ? `<details class="hota-details"><summary>Lore</summary><div class="details-content">${creature.lore.replace(/\n/g, '<br><br>')}</div></details>` : '';
+        modalBody.innerHTML = `<h3>${creature.name}</h3>${analysisHTML}${loreHTML}`;
+        showModal();
+    }
+
+    function displaySpellDetails(spellName) {
+        const spell = allSpells[spellName];
+        if (!spell) return;
+        let modalHTML = `<h3>${spell.name}</h3>`;
+        const createDetailSection = (title, content) => {
+            if (!content || (Array.isArray(content) && content.length === 0)) return '';
+            return `<details class="hota-details"><summary>${title}</summary><div class="details-content">${content}</div></details>`;
+        };
+        if (spell.effect.breakdown) {
+            const effectContent = `<ul><li><strong>Basic:</strong> ${spell.effect.breakdown.Basic}</li><li><strong>Advanced:</strong> ${spell.effect.breakdown.Advanced}</li><li><strong>Expert:</strong> ${spell.effect.breakdown.Expert}</li></ul>`;
+            modalHTML += createDetailSection("Spell Effect by Expertise", effectContent);
+        }
+        modalHTML += createDetailSection("General Information", spell.general_info);
+        if (spell.probabilities) {
+            const probContent = `<table class="modal-table"><thead><tr><th>Faction</th><th>Chance</th></tr></thead><tbody>${Object.entries(spell.probabilities).map(([faction, chance]) => `<tr><td>${faction}</td><td>${chance}</td></tr>`).join('')}</tbody></table>`;
+            modalHTML += createDetailSection("Probability of Occurrence", probContent);
+        }
+        modalHTML += createDetailSection("Hero(es) starting with this spell", spell.starting_heroes?.join(', '));
+        modalHTML += createDetailSection("Hero(es) specializing in this spell", spell.specializing_heroes?.join(', '));
+        modalHTML += createDetailSection("Creature(s) immune to this spell", spell.immune_creatures?.join(', '));
+        modalHTML += createDetailSection("Creature(s) capable of casting this spell", spell.casting_creatures?.join(', '));
+        modalHTML += createDetailSection("Damage Increased With", spell.damage_increases?.join('<br>'));
+        modalHTML += createDetailSection("Damage Decreased With", spell.damage_decreases?.join('<br>'));
+        modalHTML += createDetailSection("HotA Modifications", spell.hota_modifications);
+        modalHTML += createDetailSection("Trivia", spell.trivia);
+        modalHTML += createDetailSection("Gameplay Analysis", spell.gameplay_analysis);
+        modalHTML += createDetailSection("In-depth Mechanics", spell.in_depth_mechanics);
+        modalBody.innerHTML = modalHTML;
+        showModal();
+    }
+
+    function displayArtifactDetails(artifactName) {
+        const artifact = allArtifacts.find(a => a.name === artifactName);
+        if (!artifact) return;
+        let modalHTML = `<h3>${artifact.name}</h3>`;
+        const createDetailSection = (title, content) => {
+            if (!content) return '';
+            return `<details class="hota-details"><summary>${title}</summary><div class="details-content"><p>${content}</p></div></details>`;
+        };
+        modalHTML += createDetailSection("Component of", artifact.component_of ? `Component of the ${artifact.component_of}` : null);
+        modalHTML += createDetailSection("How it works", artifact.how_it_works);
+        modalHTML += createDetailSection("Gameplay Analysis", artifact.gameplay_analysis);
+        modalHTML += createDetailSection("Cost", artifact.cost);
+        modalHTML += createDetailSection("Related Artifacts", artifact.related_artifacts);
+        modalHTML += createDetailSection("Event description", artifact.event_description);
+        modalBody.innerHTML = modalHTML;
+        showModal();
+    }
+
+    function displaySpecialtyDetails(specialtyName, specialtyDesc) {
+        modalBody.innerHTML = `<h3>${specialtyName} (Specialty)</h3><p>${specialtyDesc}</p>`;
+        showModal();
+    }
+
+    function displayMovementDetails(type) {
+        let title = '', content = '';
+        if (type === 'flying') {
+            title = 'Flying Movement Costs';
+            content = `<p>Flying movement cost is determined by the terrain being flown over and the hero's Pathfinding skill. The costs below are Straight / Diagonal.</p><table class="modal-table"><thead><tr><th>Terrain</th><th>Basic Pathfinding</th><th>Advanced Pathfinding</th><th>Expert Pathfinding</th></tr></thead><tbody><tr><td>Impassable, Water, Swamp, Sand, Snow</td><td>140 / 197</td><td>120 / 169</td><td>100 / 141</td></tr><tr><td>Rough, Wasteland</td><td>125 / 176</td><td>100 / 141</td><td>100 / 141</td></tr><tr><td>All other non-road terrains</td><td colspan="3">100 / 141</td></tr><tr><td>Roads</td><td colspan="3">Same as ground movement</td></tr></tbody></table>`;
+        } else if (type === 'diagonal') {
+            title = 'Diagonal Move Exception';
+            content = `<p>${moveData.diagonalMoveException}</p>`;
+        }
+        modalBody.innerHTML = `<h3>${title}</h3>${content}`;
+        showModal();
+    }
+
+    function displayPrimarySkillDetails(skill) {
+        const skillInfo = {
+            attack: { title: "Attack Skill (A)", description: "A hero's attack skill value is added to each creature's attack rating, increasing the amount of damage they can inflict in combat. For each point of Attack advantage over the defender's Defense, damage is increased by 5% (up to a maximum of 300%)." },
+            defense: { title: "Defense Skill (D)", description: "A hero's defense skill is added to the defense rating of each creature in their army, decreasing the amount of damage they take from enemy attacks. For each point of Defense advantage over the attacker's Attack, the received damage is reduced by 2.5% (up to a maximum of 70%)." },
+            power: { title: "Spell Power (SP)", description: "Spell Power is the main factor for the duration of many spells (1 point of Power typically equals 1 round), the amount of damage dealt by magical attacks, and the number of hit points restored by healing spells." },
+            knowledge: { title: "Knowledge (K)", description: "Knowledge determines the maximum amount of spell points a hero can have. The total is calculated by multiplying the hero's knowledge skill by 10. For example, a hero with 12 Knowledge will have 120 spell points." }
+        };
+        const info = skillInfo[skill];
+        if (!info) return;
+        modalBody.innerHTML = `<h3>${info.title}</h3><p>${info.description}</p>`;
+        showModal();
+    }
+
+    function displayTerrainDetails(terrainName) {
+        const terrainData = moveData.nativeTerrains[terrainName];
+        if (!terrainData) return;
+        const movementBonus = `No movement penalty on this terrain for armies consisting entirely of units from its native faction(s).`;
+        const combatBonus = `All native units receive +1 Attack, +1 Defense, and +1 Speed when fighting on this terrain.`;
+        modalBody.innerHTML = `<h3>${terrainName} (Native Terrain)</h3><p><strong>Native Factions:</strong> ${terrainData.join(', ')}</p><p>${combatBonus}</p>${terrainName !== 'Grass' ? `<p>${movementBonus}</p>` : ''}`;
+        showModal();
+    }
+
+    function displayMagicSchoolDetails(schoolName) {
+        const schoolData = spellsBySchool[schoolName];
+        if (!schoolData) return;
+        let combatSpellsHTML = '';
+        for (const level in schoolData['Combat Spells']) combatSpellsHTML += `<h4>${level}</h4><p>${schoolData['Combat Spells'][level].join(', ')}</p>`;
+        let adventureSpellsHTML = '';
+        if (Object.keys(schoolData['Adventure Spells']).length > 0) {
+            adventureSpellsHTML = '<h3>Adventure Spells</h3>';
+            for (const level in schoolData['Adventure Spells']) adventureSpellsHTML += `<h4>${level}</h4><p>${schoolData['Adventure Spells'][level].join(', ')}</p>`;
+        }
+        modalBody.innerHTML = `<h2>${schoolName} Magic Spells</h2><h3>Combat Spells</h3>${combatSpellsHTML}${adventureSpellsHTML}`;
+        showModal();
+    }
+
+    function displayCreatureBankDetails(bankName) {
+        const bank = creatureBanks.find(b => b.name === bankName);
+        if (!bank) return;
+        let levelsHTML = '';
+        if (bank.levels) {
+            const levelsContent = `<table class="modal-table"><thead><tr><th>Level (Chance)</th><th>Guards</th><th>Rewards</th><th>XP</th></tr></thead><tbody>${bank.levels.map(l => `<tr><td>${l.level} (${l.level === 4 ? '10%' : '30%'})</td><td>${l.guards}</td><td>${l.rewards}</td><td>${l.experience}</td></tr>`).join('')}</tbody></table>`;
+            levelsHTML = `<details class="hota-details"><summary>${bank.name} Levels</summary><div class="details-content">${levelsContent}</div></details>`;
+        }
+        const terrainHTML = `<p><strong>Terrain:</strong> ${bank.terrain}</p>`;
+        const valueHTML = `<p><strong>Value:</strong> ${bank.value}</p>`;
+        const additionalInfoHTML = bank.additional_info ? `<p><strong>Notes:</strong> ${bank.additional_info}</p>` : '';
+        modalBody.innerHTML = `<h3>${bank.name}</h3>${levelsHTML}${terrainHTML}${valueHTML}${additionalInfoHTML}`;
+        showModal();
+    }
+
+    function displayCreatureBankBattleInfo() {
+        const title = 'Creature Bank Battle Information';
+        const content = `<img src="CreatureBankBattle.gif" alt="Creature Bank Battlefield Layout" class="battlefield-image"><p>In all Creature Banks except Black Towers, the guards are divided into five stacks of (red hexes). When there is an upstack, it will be in the lower left corner (C). All the guard stacks of the same speed attack in alphabetic order: from A to E. In Horn of the Abyss, the object's level can be preset by a map-maker, and the upgraded stack option may be toggled on or off.</p><p>The hero's troops are located in blue hexes 1-7 (a tail hex for two-hexed creatures) according to stack positioning in the army slots 1-7. But if the hero has less than 7 stacks, e.g. 3, they will be placed in hexes 1-3 no matter how they were placed in the army slots.</p><p>Though war machines are not present on the battlefield, they still provide their passive bonuses (i.e. the infinite shots effect from Ammo Cart and the First Aid/First Aid Tent health boost ).</p><p>Slain enemies do not respawn (should the hero retreat or be defeated). The damaged stack's losses will not be redistributed among the others. If a stack was destroyed, it changes the guards disposition. Its place on the battlefield will be taken by the next one in the attacking order. (E.g.: If A stack was destroyed, B stack takes its place, C stack takes the freshly vacated place of B and so on).</p>`;
+        modalBody.innerHTML = `<h3>${title}</h3>${content}`;
+        showModal();
+    }
+
+    function attachMainContentListeners() {
+        const mainContent = document.getElementById('main-content');
+        if (!mainContent) return;
+        mainContent.querySelectorAll('.clickable[data-hero-name]').forEach(el => el.addEventListener('click', (e) => displayHeroDetails(e.currentTarget.dataset.heroName)));
+        mainContent.querySelectorAll('.clickable[data-skill-name]').forEach(el => el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            displaySkillDetails(e.currentTarget.dataset.skillName);
+        }));
+        mainContent.querySelectorAll('.clickable[data-specialty-name]').forEach(el => el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            displaySpecialtyDetails(e.currentTarget.dataset.specialtyName, e.currentTarget.dataset.specialtyDesc);
+        }));
+        mainContent.querySelectorAll('.clickable[data-modal-type]').forEach(el => el.addEventListener('click', (e) => displayMovementDetails(e.currentTarget.dataset.modalType)));
+        mainContent.querySelectorAll('.clickable[data-primary-skill]').forEach(el => el.addEventListener('click', (e) => displayPrimarySkillDetails(e.currentTarget.dataset.primarySkill)));
+        mainContent.querySelectorAll('.clickable[data-terrain-name]').forEach(el => el.addEventListener('click', (e) => displayTerrainDetails(e.currentTarget.dataset.terrainName)));
+        mainContent.querySelectorAll('.clickable[data-school-name]').forEach(el => el.addEventListener('click', (e) => displayMagicSchoolDetails(e.currentTarget.dataset.schoolName)));
+    }
+
+    function attachCreatureContentListeners() {
+        const creatureContent = document.getElementById('creature-content');
+        if (!creatureContent) return;
+        creatureContent.querySelectorAll('.clickable[data-creature-name]').forEach(el => el.addEventListener('click', (e) => displayCreatureDetails(e.currentTarget.dataset.creatureName)));
+        creatureContent.querySelectorAll('.clickable[data-special-name]').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const specialName = e.currentTarget.dataset.specialName;
+                const specialDesc = e.currentTarget.dataset.specialDesc;
+                modalBody.innerHTML = `<h3>${specialName} (Special Ability)</h3><p>${specialDesc}</p>`;
+                showModal();
+            });
+        });
+    }
+
+    function attachSpellContentListeners() {
+        const spellContent = document.getElementById('spell-content');
+        if (!spellContent) return;
+        spellContent.querySelectorAll('.clickable[data-spell-name]').forEach(el => el.addEventListener('click', (e) => displaySpellDetails(e.currentTarget.dataset.spellName)));
+    }
+
+    function attachArtifactsContentListeners() {
+        const artifactsContent = document.getElementById('artifacts-content');
+        if (!artifactsContent) return;
+        artifactsContent.querySelectorAll('.clickable[data-artifact-name]').forEach(el => el.addEventListener('click', (e) => displayArtifactDetails(e.currentTarget.dataset.artifactName)));
+    }
+
+    function attachMapObjectsContentListeners() {
+        const mapObjectsContent = document.getElementById('map-objects-content');
+        if (!mapObjectsContent) return;
+        mapObjectsContent.querySelectorAll('.clickable[data-bank-name]').forEach(el => el.addEventListener('click', (e) => displayCreatureBankDetails(e.currentTarget.dataset.bankName)));
+        mapObjectsContent.querySelector('.clickable[data-modal-type="creature-bank-battle-info"]')?.addEventListener('click', displayCreatureBankBattleInfo);
+    }
+
+    function setupEventListeners() {
+        // General Modal Listeners
+        modalClose.addEventListener('click', hideModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) hideModal(); });
+
+        // Navigation Button Listeners
+        navButtons.forEach(button => {
+            if (button.dataset.view) {
+                button.addEventListener('click', () => {
+                    showView(button.dataset.view);
+                });
+            }
+        });
+
+        // Desktop Search Listeners
+        searchIconDesktop.addEventListener('click', () => {
+            searchBarDesktop.classList.toggle('search-bar-collapsed');
+            if (!searchBarDesktop.classList.contains('search-bar-collapsed')) {
+                searchBarDesktop.focus();
+            } else {
+                hideSuggestions(true);
+            }
+        });
+
+        searchBarDesktop.addEventListener('input', (e) => {
+            const query = e.target.value;
+            if (query.length > 1) {
+                performSearch(query);
+            } else {
+                hideSuggestions(false);
+            }
+        });
+
+        // Mobile Search Listeners
+        searchButtonMobile.addEventListener('click', () => {
+            searchModalMobile.classList.remove('modal-hidden');
+            searchBarMobile.focus();
+        });
+
+        searchModalClose.addEventListener('click', () => hideSuggestions(true));
+
+        searchBarMobile.addEventListener('input', (e) => {
+            const query = e.target.value;
+            if (query.length > 1) {
+                performSearch(query);
+            } else {
+                searchSuggestionsMobile.innerHTML = '';
+            }
+        });
+
+        // Global listener to hide pop-ups when clicking away
+        document.addEventListener('click', (e) => {
+            // This desktop-specific listener closes the search bar when clicking away.
+            // It's disabled on mobile to prevent it from interfering with the mobile search button.
+            if (!isMobile && searchContainerDesktop && !searchContainerDesktop.contains(e.target)) {
+                hideSuggestions(true);
+            }
+
+            // For mobile custom dropdown
+            const openSelect = document.querySelector('.custom-select-options:not(.hidden)');
+            if (openSelect && !openSelect.parentElement.contains(e.target)) {
+                openSelect.classList.add('hidden');
+                const arrow = openSelect.parentElement.querySelector('.custom-select-arrow');
+                if (arrow) arrow.classList.remove('up');
+            }
+        });
+    }
+
+    // --- Start the App ---
+    init();
+});
 
 /* ------------------- Unified Structures View (new) ------------------- */
+(function(){
+  if (typeof window === 'undefined') return;
 
-const STRUCTURE_CATEGORIES = ["All","Army Strength","Creature Banks","Economy","Hero Strength","Mobility / Intel"];
+  const STRUCTURE_CATEGORIES = ["All","Army Strength","Creature Banks","Economy","Hero Strength","Mobility / Intel"];
 
-function getStructuresForCategory(cat){
-  const all = window.structuresData || [];
-  if(cat==="All") return all;
-  return all.filter(it => Array.isArray(it.categories) && it.categories.includes(cat));
-}
-
-function ensureModal(){
-  let modal = document.getElementById("structure-modal");
-  if(modal) return modal;
-  modal = document.createElement("div");
-  modal.id = "structure-modal";
-  modal.className = "modal-root";
-  modal.innerHTML = `
-    <div class="modal-backdrop" data-close="1"></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="structure-modal-title">
-      <div class="modal-header">
-        <div class="modal-title" id="structure-modal-title"></div>
-        <button class="modal-close" aria-label="Close" data-close="1">&times;</button>
-      </div>
-      <div class="modal-body"></div>
-    </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener("click", (e)=>{ if(e.target.dataset.close==="1") modal.classList.remove("open"); });
-  if(!document.getElementById("modal-default-style")){
-    const s=document.createElement("style"); s.id="modal-default-style";
-    s.textContent=`
-      .modal-root{position:fixed;inset:0;display:none;z-index:1000}
-      .modal-root.open{display:block}
-      .modal-backdrop{position:absolute;inset:0;background:#0008}
-      .modal-card{position:relative;margin:48px auto;max-width:900px;background:#2a2a2a;color:#eee;border-radius:8px;box-shadow:0 10px 40px #000a}
-      .modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #444}
-      .modal-title{font-weight:700;color:#ffcc33}
-      .modal-close{background:none;border:0;color:#bbb;font-size:24px;cursor:pointer}
-      .modal-body{padding:16px}
-      .badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:#444;color:#ddd;margin-bottom:8px}
-      .levels-table{width:100%;border-collapse:collapse;margin:8px 0 12px 0}
-      .levels-table th,.levels-table td{border:1px solid #444;padding:8px;text-align:left}
-      .levels-header{font-weight:600;margin-top:6px;margin-bottom:4px}`;
-    document.head.appendChild(s);
+  function getStructuresForCategory(cat){
+    const all = window.structuresData || [];
+    if(cat==="All") return all;
+    return all.filter(it => Array.isArray(it.categories) && it.categories.includes(cat));
   }
-  return modal;
-}
 
-function openStructureModal(item){
-  const modal = ensureModal();
-  const title = modal.querySelector(".modal-title");
-  const body = modal.querySelector(".modal-body");
-  title.textContent = item.name;
-  let html = "";
-  if(item.overlaySubtype){
-    html += `<div class="badge">${item.overlaySubtype}</div>`;
-  }
-  if(Array.isArray(item.levels) && item.levels.length){
-    html += `<div class="levels-header">Levels</div>
-      <table class="levels-table"><thead><tr><th>Level (Chance)</th><th>Guards</th><th>Rewards</th><th>XP</th></tr></thead><tbody>
-      ${item.levels.map(l=>`<tr><td>${l.level} (${l.chance!=null?l.chance:"?"}%)</td><td>${l.guards||"—"}</td><td>${l.rewards||"—"}</td><td>${l.xp||"—"}</td></tr>`).join("")}
-      </tbody></table>`;
-  }
-  const row = (label,val)=> val ? `<p><strong>${label}:</strong> ${val}</p>` : "";
-  html += row("Terrain", item.terrain || "—");
-  html += row("Map limit", item.mapLimit || "—");
-  html += row("RMG value", item.rmgValue || "—");
-  if(item.inDepth) html += `<p>${item.inDepth}</p>`;
-  if(item.notes) html += `<p><em>${item.notes}</em></p>`;
-  if(item.trivia) html += `<p><em>${item.trivia}</em></p>`;
-  body.innerHTML = html;
-  modal.classList.add("open");
-}
-
-function ensureStructuresScaffold(){
-  let view = document.getElementById("structures-view") || document.getElementById("mapobjects-view");
-  if(!view){
-    view = document.createElement("div");
-    view.id = "structures-view";
-    (document.getElementById("app") || document.body).appendChild(view);
-  }
-  if(view.querySelector(".structures-layout")) return view;
-  const layout = document.createElement("div"); layout.className="structures-layout";
-  const sidebar = document.createElement("aside"); sidebar.id="structures-sidebar";
-  const main = document.createElement("section"); main.id="structures-main";
-  const list = document.createElement("div"); list.className="structures-filters";
-  STRUCTURE_CATEGORIES.forEach((cat,i)=>{
-    const b=document.createElement("button"); b.className="filter-btn"+(i===0?" active":""); b.textContent=cat;
-    b.addEventListener("click", ()=>{
-      list.querySelectorAll(".filter-btn").forEach(x=>x.classList.remove("active"));
-      b.classList.add("active");
-      renderStructuresList(cat);
-    });
-    list.appendChild(b);
-  });
-  sidebar.appendChild(list);
-  const table = document.createElement("table"); table.id="structures-table";
-  table.innerHTML = `<thead><tr><th>Name</th><th>Description</th></tr></thead><tbody id="structures-table-body"></tbody>`;
-  main.appendChild(table);
-  layout.appendChild(sidebar); layout.appendChild(main); view.appendChild(layout);
-  if(!document.getElementById("structures-default-style")){
-    const s=document.createElement("style"); s.id="structures-default-style";
-    s.textContent=`
-      .structures-layout{display:grid;grid-template-columns:220px 1fr;gap:12px}
-      #structures-sidebar{padding:8px}
-      .structures-filters{display:flex;flex-direction:column;gap:8px}
-      .filter-btn{padding:8px 10px;border:1px solid #444;background:#333;color:#ddd;border-radius:8px;cursor:pointer;text-align:left}
-      .filter-btn.active{background:#444;color:#ffcc33}
-      #structures-table{width:100%;border-collapse:collapse}
-      #structures-table th,#structures-table td{border-bottom:1px solid #333;padding:10px;vertical-align:top}
-      #structures-table th{color:#ffcc33;text-align:left}
-      #structures-table a{color:#ddd;text-decoration:underline dotted}
-      #structures-table a:hover{color:#fff}`;
-    document.head.appendChild(s);
-  }
-  return view;
-}
-
-function renderStructuresList(category="All"){
-  ensureStructuresScaffold();
-  const data = getStructuresForCategory(category);
-  const tbody = document.getElementById("structures-table-body");
-  if(!tbody) return;
-  tbody.innerHTML = "";
-  data.forEach(item=>{
-    const tr=document.createElement("tr");
-    const nameTd=document.createElement("td");
-    const a=document.createElement("a"); a.href="#"; a.textContent=item.name;
-    a.addEventListener("click",(e)=>{e.preventDefault(); openStructureModal(item);});
-    nameTd.appendChild(a);
-    const shortTd=document.createElement("td"); shortTd.textContent=item.short||"";
-    tr.appendChild(nameTd); tr.appendChild(shortTd); tbody.appendChild(tr);
-  });
-}
-
-function hookStructuresNav(){
-  document.querySelectorAll("a,button").forEach(node=>{
-    const t=(node.textContent||"").trim().toLowerCase();
-    if(["structures","map objects","mapobjects"].includes(t)){
-      node.addEventListener("click", ()=> setTimeout(()=>renderStructuresList("All"), 0));
+  function ensureModal(){
+    let modal = document.getElementById("structure-modal");
+    if(modal) return modal;
+    modal = document.createElement("div");
+    modal.id = "structure-modal";
+    modal.className = "modal-root";
+    modal.innerHTML = '<div class="modal-backdrop" data-close="1"></div>' +
+      '<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="structure-modal-title">' +
+      '  <div class="modal-header">' +
+      '    <div class="modal-title" id="structure-modal-title"></div>' +
+      '    <button class="modal-close" aria-label="Close" data-close="1">&times;</button>' +
+      '  </div>' +
+      '  <div class="modal-body"></div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e)=>{ if(e.target.dataset.close==="1") modal.classList.remove("open"); });
+    if(!document.getElementById("modal-default-style")){
+      const s=document.createElement("style"); s.id="modal-default-style";
+      s.textContent='.modal-root{position:fixed;inset:0;display:none;z-index:1000}.modal-root.open{display:block}.modal-backdrop{position:absolute;inset:0;background:#0008}.modal-card{position:relative;margin:48px auto;max-width:900px;background:#2a2a2a;color:#eee;border-radius:8px;box-shadow:0 10px 40px #000a}.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #444}.modal-title{font-weight:700;color:#ffcc33}.modal-close{background:none;border:0;color:#bbb;font-size:24px;cursor:pointer}.modal-body{padding:16px}.badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:#444;color:#ddd;margin-bottom:8px}.levels-table{width:100%;border-collapse:collapse;margin:8px 0 12px 0}.levels-table th,.levels-table td{border:1px solid #444;padding:8px;text-align:left}.levels-header{font-weight:600;margin-top:6px;margin-bottom:4px}';
+      document.head.appendChild(s);
     }
-  });
-}
+    return modal;
+  }
 
-document.addEventListener("DOMContentLoaded", ()=>{
-  ensureStructuresScaffold();
-  renderStructuresList("All");
-  hookStructuresNav();
-});
+  function openStructureModal(item){
+    const modal = ensureModal();
+    const title = modal.querySelector(".modal-title");
+    const body = modal.querySelector(".modal-body");
+    title.textContent = item.name;
+    let html = "";
+    if(item.overlaySubtype){
+      html += '<div class="badge">'+item.overlaySubtype+'</div>';
+    }
+    if(Array.isArray(item.levels) && item.levels.length){
+      html += '<div class="levels-header">Levels</div><table class="levels-table"><thead><tr><th>Level (Chance)</th><th>Guards</th><th>Rewards</th><th>XP</th></tr></thead><tbody>';
+      html += item.levels.map(function(l){
+        return '<tr><td>'+l.level+' ('+((l.chance!=null)?l.chance:'?')+'%)</td><td>'+(l.guards||'—')+'</td><td>'+(l.rewards||'—')+'</td><td>'+(l.xp||'—')+'</td></tr>';
+      }).join('');
+      html += '</tbody></table>';
+    }
+    function row(label,val){ return val ? '<p><strong>'+label+':</strong> '+val+'</p>' : ''; }
+    html += row('Terrain', item.terrain || '—');
+    html += row('Map limit', item.mapLimit || '—');
+    html += row('RMG value', item.rmgValue || '—');
+    if(item.inDepth) html += '<p>'+item.inDepth+'</p>';
+    if(item.notes) html += '<p><em>'+item.notes+'</em></p>';
+    if(item.trivia) html += '<p><em>'+item.trivia+'</em></p>';
+    body.innerHTML = html;
+    modal.classList.add('open');
+  }
+
+  function ensureStructuresScaffold(){
+    let view = document.getElementById('structures-view') || document.getElementById('mapobjects-view');
+    if(!view){
+      view = document.createElement('div');
+      view.id = 'structures-view';
+      (document.getElementById('app') || document.body).appendChild(view);
+    }
+    if(view.querySelector('.structures-layout')) return view;
+    const layout = document.createElement('div'); layout.className='structures-layout';
+    const sidebar = document.createElement('aside'); sidebar.id='structures-sidebar';
+    const main = document.createElement('section'); main.id='structures-main';
+    const list = document.createElement('div'); list.className='structures-filters';
+    const STRUCTURE_CATEGORIES_LOCAL = ["All","Army Strength","Creature Banks","Economy","Hero Strength","Mobility / Intel"];
+    STRUCTURE_CATEGORIES_LOCAL.forEach(function(cat,i){
+      const b=document.createElement('button'); b.className='filter-btn'+(i===0?' active':''); b.textContent=cat;
+      b.addEventListener('click', function(){
+        list.querySelectorAll('.filter-btn').forEach(function(x){ x.classList.remove('active'); });
+        b.classList.add('active');
+        renderStructuresList(cat);
+      });
+      list.appendChild(b);
+    });
+    sidebar.appendChild(list);
+    const table = document.createElement('table'); table.id='structures-table';
+    table.innerHTML = '<thead><tr><th>Name</th><th>Description</th></tr></thead><tbody id="structures-table-body"></tbody>';
+    main.appendChild(table);
+    layout.appendChild(sidebar); layout.appendChild(main); view.appendChild(layout);
+    if(!document.getElementById('structures-default-style')){
+      const s=document.createElement('style'); s.id='structures-default-style';
+      s.textContent='.structures-layout{display:grid;grid-template-columns:220px 1fr;gap:12px}#structures-sidebar{padding:8px}.structures-filters{display:flex;flex-direction:column;gap:8px}.filter-btn{padding:8px 10px;border:1px solid #444;background:#333;color:#ddd;border-radius:8px;cursor:pointer;text-align:left}.filter-btn.active{background:#444;color:#ffcc33}#structures-table{width:100%;border-collapse:collapse}#structures-table th,#structures-table td{border-bottom:1px solid #333;padding:10px;vertical-align:top}#structures-table th{color:#ffcc33;text-align:left}#structures-table a{color:#ddd;text-decoration:underline dotted}#structures-table a:hover{color:#fff}';
+      document.head.appendChild(s);
+    }
+    return view;
+  }
+
+  function renderStructuresList(category){
+    ensureStructuresScaffold();
+    var data = getStructuresForCategory(category||'All');
+    var tbody = document.getElementById('structures-table-body');
+    if(!tbody) return;
+    tbody.innerHTML = '';
+    data.forEach(function(item){
+      var tr=document.createElement('tr');
+      var nameTd=document.createElement('td');
+      var a=document.createElement('a'); a.href='#'; a.textContent=item.name;
+      a.addEventListener('click', function(e){ e.preventDefault(); openStructureModal(item); });
+      nameTd.appendChild(a);
+      var shortTd=document.createElement('td'); shortTd.textContent=item.short||'';
+      tr.appendChild(nameTd); tr.appendChild(shortTd); tbody.appendChild(tr);
+    });
+  }
+
+  function hookStructuresNav(){
+    document.querySelectorAll('a,button').forEach(function(node){
+      var t=(node.textContent||'').trim().toLowerCase();
+      if(['structures','map objects','mapobjects'].includes(t)){
+        node.addEventListener('click', function(){ setTimeout(function(){ renderStructuresList('All'); }, 0); });
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    ensureStructuresScaffold();
+    renderStructuresList('All');
+    hookStructuresNav();
+  });
+})();
